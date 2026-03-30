@@ -57,18 +57,25 @@ document.dispatchEvent(new Event('firebase-ready'));
   body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:48px}
 
   /* HEADER */
-  header{background:var(--header-bg);padding:14px 16px;display:flex;align-items:center;justify-content:flex-start;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border)}
+  header{background:var(--header-bg);padding:14px 16px;display:flex;align-items:center;justify-content:flex-start;border-bottom:1px solid var(--border)}
   header h1{font-size:1rem;font-weight:600;color:var(--header-text);letter-spacing:.04em}
   .hdr-btns{margin-left:auto;display:flex;gap:5px;flex-shrink:0}
   .hdr-btn{background:rgba(0,0,0,.07);border:none;border-radius:7px;color:var(--header-text);padding:5px 9px;cursor:pointer;font-size:.75rem;font-family:inherit;font-weight:500}
   .hdr-btn:hover{background:rgba(0,0,0,.13)}
 
   /* TABS */
-  .container{max-width:520px;margin:0 auto;padding:14px 14px 0}
-  .tabs{display:flex;background:var(--card);border-radius:var(--radius);padding:4px;margin-bottom:14px;box-shadow:var(--shadow)}
-  .tab-btn{flex:1;padding:10px 4px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:.88rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .18s}
-  .tab-btn.active{background:var(--tab-active);color:#fff}
+  .container{max-width:520px;margin:0 auto;padding:0}
+  .tab-bar{background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:0;position:sticky;top:0;z-index:90}
+  .tab-bar .tabs{max-width:520px;margin:0 auto;padding:0 14px}
+  .page-content{padding:0 14px;padding-top:14px}
+  .tab-content{padding-top:0}
+  .tabs{display:flex;background:var(--card);padding:0 14px;margin-bottom:0;border-bottom:1.5px solid var(--border)}
+  .tab-btn{flex:1;padding:13px 4px;border:none;background:none;border-radius:0;font-family:inherit;font-size:.9rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:color .18s;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;white-space:nowrap}
+  .tab-btn.active{color:var(--tab-active);font-weight:700;border-bottom-color:var(--tab-active);background:none}
   .tab-content{display:none}.tab-content.active{display:block}
+
+  /* HISTORY controls sticky - sits right under tab-bar */
+  .history-controls{position:sticky;top:48px;z-index:80;background:var(--bg);padding:12px 0 8px;margin-bottom:4px}
 
   /* CARDS */
   .card{background:var(--card);border-radius:var(--radius);padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}
@@ -114,45 +121,65 @@ document.dispatchEvent(new Event('firebase-ready'));
   .transfer-form{display:none}.transfer-form.active{display:block}
   .expense-form{display:none}.expense-form.active{display:block}
 
-  /* HISTORY */
-  .history-filter-card{background:var(--card);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .history-filter-card .card-title{margin:0;white-space:nowrap}
-  .history-filters{display:flex;gap:6px;flex-shrink:0}
-  .record-card{border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px;background:var(--card);box-shadow:var(--shadow)}
-  .record-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-  .record-title{font-weight:700;font-size:.95rem}
-  .record-meta{font-size:.76rem;color:var(--text-muted);margin-top:3px}
-  .badge{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;margin-left:8px}
+  /* HISTORY - triple pill + person filter */
+  .history-controls{margin-bottom:14px}
+  .triple-pill{display:flex;background:#e2ddd7;border-radius:10px;padding:3px;margin-bottom:10px}
+  .triple-btn{flex:1;text-align:center;padding:9px 4px;border:none;background:none;border-radius:8px;font-family:inherit;font-size:.86rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .18s}
+  .triple-btn.active{background:white;color:var(--tab-active);font-weight:700;box-shadow:0 1px 5px rgba(0,0,0,.1)}
+  .person-filter-row{display:flex;align-items:center;gap:8px}
+  .person-filter-row label{font-size:.78rem;color:var(--text-muted);flex-shrink:0}
+  .person-filter-row select{flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:.82rem;background:white;color:var(--text);outline:none}
+
+  .tgroup-summary-block{border-top:1.5px solid var(--border);margin:0;padding:10px 14px 4px;background:#fafaf8}
+  .tgroup-sum-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:.82rem}
+  .tgroup-sum-label{color:var(--text-muted)}
+  .tgroup-sum-val{font-family:'DM Mono',monospace;font-weight:600;color:var(--text-muted);font-size:.82rem}
+  .tgroup-sum-total{padding-top:6px;margin-top:2px;border-top:1px dashed var(--border)}
+  .tgroup-sum-label-total{color:var(--green);font-weight:700}
+  .tgroup-sum-val-total{font-family:'DM Mono',monospace;font-weight:700;color:var(--green);font-size:.88rem}
+
+  /* Surplus cards in 儲值 tab */
+  .surplus-card{background:var(--card);border-radius:var(--radius);padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow);border:1px solid #ede9e3}
+  .surplus-head{margin-bottom:10px}
+  .surplus-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f5f2ee;font-size:.84rem}
+  .surplus-row:last-child{border-bottom:none}
+  .surplus-label{color:var(--text-muted)}
+  .surplus-val{font-family:'DM Mono',monospace;font-weight:600;font-size:.84rem;color:var(--text-muted)}
+  .surplus-row-total{background:#f0faf5;margin:0 -14px;padding:8px 14px;border-radius:0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px);border-bottom:none!important}
+  .surplus-label-total{color:var(--green);font-weight:700;font-size:.84rem}
+  .surplus-val-total{font-family:'DM Mono',monospace;font-weight:700;font-size:.9rem;color:var(--green)}
+
+  /* Record: individual cards */
+  .rec-card{background:var(--card);border-radius:var(--radius);padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow);border:1px solid #ede9e3}
+  .rec-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+  .rec-name{font-weight:700;font-size:.92rem}
+  .rec-meta-line{font-size:.74rem;color:var(--text-muted);margin-bottom:10px}
+  .badge{font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;margin-left:6px}
   .badge.all-clear{background:var(--green-bg);color:var(--green)}
   .badge.partial{background:var(--red-bg);color:var(--red)}
-  .item-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:9px;margin-bottom:5px}
-  .item-row.is-paid{background:var(--green-bg)}.item-row.is-unpaid{background:#fafaf9;border:1px solid var(--border)}.item-row.is-self{background:#f5f5f5}
+  .item-row{display:flex;align-items:center;justify-content:space-between}
+  .item-row.is-unpaid{background:white;border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-bottom:5px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .item-row.is-paid{padding:4px 2px;margin-bottom:2px;opacity:.42}
+  .item-row.is-self{padding:4px 2px;margin-bottom:2px;opacity:.35}
   .item-left{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
-  .item-emoji{font-size:1rem;flex-shrink:0}
-  .item-name{font-weight:600;white-space:nowrap;font-size:.86rem}
-  .item-detail{color:var(--text-muted);font-size:.83rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .item-right{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px}
+  .item-emoji{font-size:.95rem;flex-shrink:0}
+  .item-name{font-weight:600;white-space:nowrap;font-size:.85rem}
+  .item-detail{color:var(--text-muted);font-size:.81rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item-row.is-paid .item-name,.item-row.is-paid .item-detail{text-decoration:line-through}
+  .item-right{display:flex;align-items:center;gap:7px;flex-shrink:0;margin-left:10px}
   .item-amount{font-family:'DM Mono',monospace;font-weight:700;font-size:.85rem;color:var(--text)}
-  .item-self-label{font-size:.68rem;color:var(--text-muted);background:#ebebeb;padding:2px 7px;border-radius:10px}
-  .btn-pay{border:none;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;padding:5px 10px;font-size:.75rem;font-weight:600;white-space:nowrap;transition:all .15s}
+  .item-row.is-unpaid .item-amount{color:var(--red)}
+  .item-self-label{font-size:.65rem;color:var(--text-muted);background:#ebebeb;padding:2px 7px;border-radius:10px}
+  .btn-pay{border:none;border-radius:7px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:.72rem;font-weight:700;white-space:nowrap;transition:all .15s}
   .btn-pay.unpaid-state{background:var(--red-bg);color:var(--red)}
-  .btn-pay.paid-state{background:var(--green-bg);color:var(--green)}
-  .pay-icon{font-size:.9rem}
-  .record-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-  .record-total{font-family:'DM Mono',monospace;font-weight:700;font-size:.88rem;color:var(--text)}
-  .record-actions{display:flex;gap:6px}
-  .btn-action{border:none;border-radius:8px;padding:6px 12px;font-family:inherit;font-size:.76rem;font-weight:600;cursor:pointer}
-  .btn-edit{background:#e8e8e8;color:#555}.btn-delete{background:#3a3a3a;color:#fff}
-  .transfer-card{border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px;background:var(--card);box-shadow:var(--shadow)}
-  .transfer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-  .transfer-parties{display:flex;align-items:center;gap:8px;font-size:.9rem}
-  .transfer-arrow-icon{color:var(--text-muted);font-size:.85rem}
-  .transfer-amounts{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;margin-left:10px}
-  .transfer-main-amt{font-family:'DM Mono',monospace;font-weight:700;font-size:1rem;color:var(--text)}
-  .transfer-surplus{font-family:'DM Mono',monospace;font-weight:700;font-size:.88rem;color:var(--green)}
-  .transfer-bottom{display:flex;align-items:center;justify-content:space-between}
-  .transfer-meta{font-size:.76rem;color:var(--text-muted)}
-  .badge-transfer{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--blue-bg);color:var(--blue);white-space:nowrap;flex-shrink:0}
+  .btn-pay.paid-state{background:#f0f0f0;color:#999}
+  .pay-icon{font-size:.85rem}
+  .rec-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:9px;border-top:1px solid #f0ede8}
+  .record-total{font-family:'DM Mono',monospace;font-weight:600;font-size:.82rem;color:var(--text-muted)}
+  .record-actions{display:flex;gap:4px}
+  .btn-action{border:none;border-radius:7px;padding:5px 11px;font-family:inherit;font-size:.74rem;font-weight:600;cursor:pointer}
+  .btn-edit{background:none;color:#bbb;padding:5px 8px}
+  .btn-delete{background:#3a3a3a;color:#fff}
 
   /* MODALS */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:flex-end;justify-content:center}
@@ -230,15 +257,21 @@ document.dispatchEvent(new Event('firebase-ready'));
   </div>
 </header>
 
-<div class="container">
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('debt')">恩怨情仇</button>
-    <button class="tab-btn" onclick="switchTab('add')">新增</button>
-    <button class="tab-btn" onclick="switchTab('history')">帳本</button>
+<div class="tab-bar">
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('add')">新增</button>
+      <button class="tab-btn" onclick="switchTab('transfer')">儲值</button>
+      <button class="tab-btn" onclick="switchTab('history')">帳本</button>
+      <button class="tab-btn" onclick="switchTab('debt')">恩怨</button>
+    </div>
   </div>
+</div>
+
+<div class="container page-content">
 
   <!-- 恩怨情仇 -->
-  <div id="tab-debt" class="tab-content active">
+  <div id="tab-debt" class="tab-content">
     <div class="card">
       <div class="card-title">目前誰欠誰</div>
       <div class="filter-row">
@@ -250,55 +283,49 @@ document.dispatchEvent(new Event('firebase-ready'));
   </div>
 
   <!-- 新增 -->
-  <div id="tab-add" class="tab-content">
+  <div id="tab-add" class="tab-content active">
     <div class="card">
-      <div class="card-title" id="addFormTitle">新增紀錄</div>
-      <div class="type-switcher" id="typeSwitcher">
-        <button class="type-btn active" onclick="switchType('expense')">🧾 消費紀錄</button>
-        <button class="type-btn" onclick="switchType('transfer')">💸 轉帳儲值</button>
-      </div>
-      <div class="expense-form active" id="expenseForm">
-        <div class="form-group"><label>日期</label><input type="date" id="addDate" class="full"></div>
-        <div class="form-group"><label>店家名稱</label><input type="text" id="addTitle" placeholder="例：三商巧福、全家..."></div>
-        <div class="form-group"><label>誰付錢</label><select id="addPayer" class="full"><option value="">請選擇</option></select></div>
-        <div class="form-group">
-          <label>各人明細</label>
-          <div class="consumers-box">
-            <div id="consumerRows"></div>
-            <button class="btn-add-item" onclick="addConsumerRow()">＋ 新增一筆</button>
-          </div>
+      <div class="card-title" id="addFormTitle">新增消費</div>
+      <div class="form-group"><label>日期</label><input type="date" id="addDate" class="full"></div>
+      <div class="form-group"><label>店家名稱</label><input type="text" id="addTitle" placeholder="例：三商巧福、全家..."></div>
+      <div class="form-group"><label>誰付錢</label><select id="addPayer" class="full"><option value="">請選擇</option></select></div>
+      <div class="form-group">
+        <label>各人明細</label>
+        <div class="consumers-box">
+          <div id="consumerRows"></div>
+          <button class="btn-add-item" onclick="addConsumerRow()">＋ 新增一筆</button>
         </div>
-        <div class="total-row"><span>合計</span><span class="total-amt" id="totalAmt">0 元</span></div>
-        <button class="btn-submit" onclick="submitRecord()">儲存紀錄</button>
       </div>
-      <div class="transfer-form" id="transferForm">
-        <div class="form-group"><label>日期</label><input type="date" id="tfDate" class="full"></div>
-        <div class="form-group"><label>誰轉帳（付錢的人）</label><select id="tfFrom" class="full"><option value="">請選擇</option></select></div>
-        <div class="form-group"><label>轉給誰（收錢的人）</label><select id="tfTo" class="full"><option value="">請選擇</option></select></div>
-        <div class="form-group"><label>金額</label><input type="number" id="tfAmount" placeholder="例：500" min="0" class="full"></div>
-        <div class="form-group"><label>備註（選填）</label><input type="text" id="tfNote" placeholder="例：還上週的帳" class="full"></div>
-        <button class="btn-submit" onclick="submitTransfer()">儲存轉帳</button>
-      </div>
+      <div class="total-row"><span>合計</span><span class="total-amt" id="totalAmt">0 元</span></div>
+      <button class="btn-submit" onclick="submitRecord()">儲存紀錄</button>
+    </div>
+  </div>
+
+  <!-- 儲值 -->
+  <div id="tab-transfer" class="tab-content">
+    <div class="card">
+      <div class="card-title" id="transferFormTitle">新增儲值</div>
+      <div class="form-group"><label>日期</label><input type="date" id="tfDate" class="full"></div>
+      <div class="form-group"><label>誰儲值（付錢的人）</label><select id="tfFrom" class="full"><option value="">請選擇</option></select></div>
+      <div class="form-group"><label>儲值給誰（收錢的人）</label><select id="tfTo" class="full"><option value="">請選擇</option></select></div>
+      <div class="form-group"><label>金額</label><input type="number" id="tfAmount" placeholder="例：500" min="0" class="full"></div>
+      <div class="form-group"><label>備註（選填）</label><input type="text" id="tfNote" placeholder="例：先存著抵以後的帳" class="full"></div>
+      <button class="btn-submit" onclick="submitTransfer()">儲存儲值</button>
     </div>
   </div>
 
   <!-- 帳本 -->
   <div id="tab-history" class="tab-content">
-    <div class="history-filter-card">
-      <div class="card-title">帳本</div>
-      <div class="history-filters">
-        <select id="historyPerson" onchange="renderHistory()"><option value="">所有人</option></select>
-        <select id="historyFilter" onchange="renderHistory()">
-          <option value="all">全部</option>
-          <option value="unpaid">尚有欠款</option>
-          <option value="cleared">完全結清</option>
-        </select>
+    <div class="history-controls">
+      <div class="triple-pill">
+        <button class="triple-btn active" id="hPillUnpaid" onclick="switchHistoryMode('unpaid')">未還款</button>
+        <button class="triple-btn" id="hPillAll" onclick="switchHistoryMode('all')">全部</button>
+        <button class="triple-btn" id="hPillTransfer" onclick="switchHistoryMode('transfer')">儲值</button>
       </div>
-    </div>
-    <!-- sub-tab switcher -->
-    <div class="type-switcher" style="margin-bottom:14px">
-      <button class="type-btn active" id="hSubExpenseBtn" onclick="switchHistorySub('expense')">🧾 消費紀錄</button>
-      <button class="type-btn" id="hSubTransferBtn" onclick="switchHistorySub('transfer')">💸 轉帳儲值</button>
+      <div class="person-filter-row" id="personFilterRow">
+        <label>查看誰的</label>
+        <select id="historyPerson" onchange="renderHistory()"><option value="">所有人</option></select>
+      </div>
     </div>
     <div id="expenseList"></div>
     <div id="transferList" style="display:none"></div>
@@ -388,26 +415,42 @@ function closeModalOutside(e,id){if(e.target.id===id)closeModal(id)}
 
 // ── TABS ──
 function switchTab(name){
-  ['debt','add','history'].forEach((n,i)=>{
+  ['add','transfer','history','debt'].forEach((n,i)=>{
     document.querySelectorAll('.tab-btn')[i].classList.toggle('active',n===name);
     document.getElementById('tab-'+n).classList.toggle('active',n===name);
   });
   if(name==='debt')renderDebts();
   if(name==='history')renderHistory();
   if(name==='add')renderAddForm();
+  if(name==='transfer'){renderTransferForm();}
 }
 
-// ── TYPE SWITCHER ──
-let currentType='expense';
-function switchType(type){
-  if(editId)return;
-  currentType=type;
-  document.querySelectorAll('.type-btn').forEach((b,i)=>b.classList.toggle('active',['expense','transfer'][i]===type));
-  document.getElementById('expenseForm').classList.toggle('active',type==='expense');
-  document.getElementById('transferForm').classList.toggle('active',type==='transfer');
+
+// ── ADD FORM ──
+let editId=null;
+function renderAddForm(){
+  if(!editId){
+    document.getElementById('addDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('addTitle').value='';
+    document.getElementById('addPayer').value='';
+    document.getElementById('consumerRows').innerHTML='';
+    document.getElementById('addFormTitle').textContent='新增消費';
+    updateTotal();
+  }
+  const payer=document.getElementById('addPayer');
+  const cur=payer.value;
+  payer.innerHTML='<option value="">請選擇</option>'+state.members.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
+  if(!document.getElementById('consumerRows').children.length)addConsumerRow();
 }
 
-// ── MEMBERS ──
+function renderTransferForm(){
+  document.getElementById('tfDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('tfAmount').value='';
+  document.getElementById('tfNote').value='';
+  const opts='<option value="">請選擇</option>'+state.members.map(m=>`<option value="${m}">${m}</option>`).join('');
+  document.getElementById('tfFrom').innerHTML=opts;
+  document.getElementById('tfTo').innerHTML=opts;
+}
 function renderMembers(){
   const el=document.getElementById('memberList');
   if(!state.members.length){el.innerHTML='<p style="color:var(--text-muted);font-size:.85rem">還沒有成員，加幾個吧！</p>';return}
@@ -426,7 +469,7 @@ function addMember(){
   if(state.members.includes(name)){toast('這個名字已經有了');return}
   state.members.push(name);
   addLog('add',`新增成員「${name}」`);
-  save();input.value='';renderMembers();renderAddForm();toast(`${name} 加入了 👋`);
+  save();input.value='';renderMembers();renderAddForm();renderTransferForm();toast(`${name} 加入了 👋`);
 }
 function removeMember(name){
   state.members=state.members.filter(m=>m!==name);
@@ -446,28 +489,7 @@ function renderLog(){
     </div>`).join('');
 }
 
-// ── ADD FORM ──
-let editId=null;
-function renderAddForm(){
-  if(!editId){
-    document.getElementById('addDate').value=new Date().toISOString().slice(0,10);
-    document.getElementById('addTitle').value='';
-    document.getElementById('addPayer').value='';
-    document.getElementById('consumerRows').innerHTML='';
-    document.getElementById('tfDate').value=new Date().toISOString().slice(0,10);
-    document.getElementById('tfAmount').value='';
-    document.getElementById('tfNote').value='';
-    document.getElementById('addFormTitle').textContent='新增紀錄';
-    updateTotal();
-  }
-  const opts='<option value="">請選擇</option>'+state.members.map(m=>`<option value="${m}">${m}</option>`).join('');
-  const payer=document.getElementById('addPayer');
-  const cur=payer.value;
-  payer.innerHTML='<option value="">請選擇</option>'+state.members.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
-  document.getElementById('tfFrom').innerHTML=opts;
-  document.getElementById('tfTo').innerHTML=opts;
-  if(!document.getElementById('consumerRows').children.length)addConsumerRow();
-}
+
 function addConsumerRow(consumer='',item='',amount=''){
   const row=document.createElement('div');
   row.className='consumer-row';
@@ -565,7 +587,7 @@ function submitTransfer(){
   document.getElementById('tfAmount').value='';
   document.getElementById('tfNote').value='';
   toast(`已記錄 💸${settled.length?' 並自動結清 '+settled.length+' 筆':''}`);
-  switchTab('history');
+  switchTab('transfer');
 }
 
 function deleteTransfer(id){
@@ -575,60 +597,45 @@ function deleteTransfer(id){
   save();renderHistory();renderDebts();toast('已刪除');
 }
 
-// ── DEBT CALC（含轉帳餘額）──
+// ── DEBT CALC（純淨額，消費+儲值完全合併）──
 function calcDebts(){
-  // raw debts from unpaid items
-  const raw={}; // raw[from][to] = amount owed
-  const ensure=(a,b)=>{if(!raw[a])raw[a]={};if(!raw[a][b])raw[a][b]=0};
+  const net={}; // net[a][b] = a 欠 b 的淨額（正值=a欠b，負值=b欠a）
+  const ensure=(a,b)=>{if(!net[a])net[a]={};if(!net[a][b])net[a][b]=0};
+
+  // 消費產生的欠款
   state.records.forEach(r=>{
     r.items.forEach(item=>{
       if(!item.paid&&item.consumer!==r.payer){
         ensure(item.consumer,r.payer);
-        raw[item.consumer][r.payer]+=item.amount;
+        net[item.consumer][r.payer]+=item.amount;
       }
     });
   });
 
-  // surplus from transfers (remaining amount not yet settled)
-  const surplus={}; // surplus[from][to] = leftover credit
+  // 儲值全額抵銷欠款（被自動結清的消費已透過 paid=true 移出欠款，不會重複計算）
   ;(state.transfers||[]).forEach(t=>{
-    if(t.surplus>0){
-      if(!surplus[t.from])surplus[t.from]={};
-      if(!surplus[t.from][t.to])surplus[t.from][t.to]=0;
-      surplus[t.from][t.to]+=t.surplus;
-    }
+    ensure(t.from,t.to);
+    net[t.from][t.to]-=t.amount;
   });
 
-  // Build result: person → [{to, owes, credit, net}]
-  const all=new Set([
-    ...Object.keys(raw),
-    ...Object.values(raw).flatMap(v=>Object.keys(v)),
-    ...Object.keys(surplus),
-    ...Object.values(surplus).flatMap(v=>Object.keys(v)),
-  ]);
+  // 合併雙向：a欠b和b欠a抵銷，只留淨額
   const result={};
   const done=new Set();
+  const all=new Set([
+    ...Object.keys(net),
+    ...Object.values(net).flatMap(v=>Object.keys(v))
+  ]);
   all.forEach(a=>all.forEach(b=>{
     if(a===b)return;
     const key=[a,b].sort().join('|');
     if(done.has(key))return;done.add(key);
-    const ab=(raw[a]?.[b]||0), ba=(raw[b]?.[a]||0);
-    const sa=(surplus[a]?.[b]||0), sb=(surplus[b]?.[a]||0);
-    // net: a owes b = ab - ba - sa + sb
-    const net=ab-ba-sa+sb;
-    if(net>0.01){
+    const diff=(net[a]?.[b]||0)-(net[b]?.[a]||0);
+    if(diff>0.01){
       if(!result[a])result[a]=[];
-      result[a].push({to:b,owes:net,credit:sa});
-    } else if(net<-0.01){
+      result[a].push({to:b,owes:diff});
+    } else if(diff<-0.01){
       if(!result[b])result[b]=[];
-      result[b].push({to:a,owes:-net,credit:sb});
-    } else if(sa>0){
-      // net=0 but has surplus: show credit only
-      if(!result[a])result[a]=[];
-      result[a].push({to:b,owes:0,credit:sa});
-    } else if(sb>0){
-      if(!result[b])result[b]=[];
-      result[b].push({to:a,owes:0,credit:sb});
+      result[b].push({to:a,owes:-diff});
     }
   }));
   return result;
@@ -648,41 +655,26 @@ function renderDebts(){
     const p=pc(person);
     const rows=debts[person];
     const totalNet=rows.reduce((s,r)=>s+r.owes,0);
-    const rowsHtml=rows.map(r=>{
-      let mainRow='';
-      if(r.owes>0.01){
-        mainRow=`<div class="person-debt-row">
-          <span class="to-whom">還給 <strong>${r.to}</strong></span>
-          <span class="row-amt">${Math.round(r.owes)} 元</span>
-        </div>`;
-      } else if(r.owes<-0.01){
-        mainRow=`<div class="person-debt-row">
-          <span class="to-whom" style="color:var(--green)"><strong>${r.to}</strong> 欠回來</span>
-          <span class="row-amt" style="color:var(--green)">+${Math.round(-r.owes)} 元</span>
-        </div>`;
-      }
-      const balRow=r.credit>0?`
-        <div class="balance-row">
-          <span class="balance-label">💳 預付餘額（待抵）</span>
-          <span class="balance-amt">+${Math.round(r.credit)} 元</span>
-        </div>`:'';
-      return mainRow+balRow;
-    }).join('');
-
-    const totalLabel=totalNet>0.01
-      ? Math.round(totalNet)+' 元'
-      : totalNet<-0.01
-        ? '被欠 '+Math.round(-totalNet)+' 元'
-        : '✓ 已結清';
+    const rowsHtml=rows.map(r=>`
+      <div class="person-debt-row">
+        <span class="to-whom">還給 <strong>${r.to}</strong></span>
+        <span class="row-amt">${Math.round(r.owes)} 元</span>
+      </div>`).join('');
 
     return`<div class="person-debt-card">
       <div class="person-debt-header" style="background:${p.bg};color:${p.fg}">
         <div class="pname"><span class="person-emoji">${p.em}</span><span>${person}</span></div>
-        <span class="person-debt-total">${totalLabel}</span>
+        <span class="person-debt-total">${Math.round(totalNet)} 元</span>
       </div>
       <div class="person-debt-rows">${rowsHtml}</div>
     </div>`;
   }).join('');
+}
+
+// ── SURPLUS SUMMARY（儲值頁餘額總覽）──
+function renderSurplus(){
+  // 現在整合在 renderHistory 的 transferList 裡，此函式保留供相容性呼叫
+  renderHistory();
 }
 
 
@@ -703,19 +695,19 @@ function hasAnyUnpaid(r){return r.items.some(i=>!i.paid&&i.consumer!==r.payer)}
 function recordInvolvePerson(r,person){return r.payer===person||r.items.some(i=>i.consumer===person)}
 function transferInvolvePerson(t,person){return t.from===person||t.to===person}
 
-let historySub='expense'; // 'expense' or 'transfer'
-function switchHistorySub(sub){
-  historySub=sub;
-  document.getElementById('hSubExpenseBtn').classList.toggle('active',sub==='expense');
-  document.getElementById('hSubTransferBtn').classList.toggle('active',sub==='transfer');
-  document.getElementById('expenseList').style.display=sub==='expense'?'block':'none';
-  document.getElementById('transferList').style.display=sub==='transfer'?'block':'none';
-  // hide filter row for transfer (no unpaid/cleared concept)
-  document.getElementById('historyFilter').style.display=sub==='transfer'?'none':'block';
+let historyMode='unpaid'; // 'unpaid' | 'all' | 'transfer'
+function switchHistoryMode(mode){
+  historyMode=mode;
+  ['unpaid','all','transfer'].forEach(m=>{
+    document.getElementById('hPill'+m.charAt(0).toUpperCase()+m.slice(1)).classList.toggle('active',m===mode);
+  });
+  document.getElementById('expenseList').style.display=mode!=='transfer'?'block':'none';
+  document.getElementById('transferList').style.display=mode==='transfer'?'block':'none';
+  // person filter always visible
+  renderHistory();
 }
 
 function renderHistory(){
-  const filter=document.getElementById('historyFilter').value;
   const person=document.getElementById('historyPerson').value;
 
   // Update person dropdown
@@ -724,112 +716,124 @@ function renderHistory(){
   ps.innerHTML='<option value="">所有人</option>'+state.members.map(m=>`<option value="${m}" ${m===curP?'selected':''}>${m}</option>`).join('');
 
   // ── 消費紀錄 ──
-  let records=[...state.records].sort((a,b)=>b.createdAt-a.createdAt);
-  if(filter==='unpaid')records=records.filter(r=>hasAnyUnpaid(r));
-  if(filter==='cleared')records=records.filter(r=>isFullyCleared(r));
-  if(person)records=records.filter(r=>recordInvolvePerson(r,person));
+  if(historyMode!=='transfer'){
+    let records=[...state.records].sort((a,b)=>b.createdAt-a.createdAt);
+    if(historyMode==='unpaid')records=records.filter(r=>hasAnyUnpaid(r));
+    if(person)records=records.filter(r=>recordInvolvePerson(r,person));
 
-  const expenseEl=document.getElementById('expenseList');
-  if(!records.length){
-    expenseEl.innerHTML=`<div class="empty-state"><div class="icon">📭</div>沒有消費紀錄</div>`;
-  } else {
-    expenseEl.innerHTML=records.map(r=>{
-      const allClear=isFullyCleared(r);
-      const itemsHtml=r.items.map((item,idx)=>{
-        const isSelf=item.consumer===r.payer;
-        const paid=item.paid||isSelf;
-        const p=pc(item.consumer);
-        let cls,rightHtml;
-        if(isSelf){
-          cls='is-self';
-          rightHtml=`<span class="item-amount">${item.amount} 元</span><span class="item-self-label">已付款</span>`;
-        } else if(paid){
-          cls='is-paid';
-          rightHtml=`<span class="item-amount">${item.amount} 元</span>
-            <button class="btn-pay paid-state" onclick="toggleItemPaid('${r.id}',${idx})"><span class="pay-icon">✅</span> 已還款</button>`;
-        } else {
-          cls='is-unpaid';
-          rightHtml=`<span class="item-amount">${item.amount} 元</span>
-            <button class="btn-pay unpaid-state" onclick="toggleItemPaid('${r.id}',${idx})"><span class="pay-icon">🪙</span> 未還款</button>`;
-        }
-        return`<div class="item-row ${cls}">
-          <div class="item-left"><span class="item-emoji">${p.em}</span><span class="item-name">${item.consumer}</span><span class="item-detail">｜${item.item}</span></div>
-          <div class="item-right">${rightHtml}</div>
+    const expenseEl=document.getElementById('expenseList');
+    if(!records.length){
+      expenseEl.innerHTML=`<div class="empty-state"><div class="icon">📭</div>${historyMode==='unpaid'?'目前沒有未還款的紀錄 🎉':'這裡還沒有紀錄'}</div>`;
+    } else {
+      expenseEl.innerHTML=records.map(r=>{
+        const allClear=isFullyCleared(r);
+        const itemsHtml=r.items.map((item,idx)=>{
+          const isSelf=item.consumer===r.payer;
+          const paid=item.paid||isSelf;
+          const p=pc(item.consumer);
+          let cls,rightHtml;
+          if(isSelf){
+            cls='is-self';
+            rightHtml=`<span class="item-amount">${item.amount} 元</span><span class="item-self-label">已付款</span>`;
+          } else if(paid){
+            cls='is-paid';
+            rightHtml=`<span class="item-amount">${item.amount} 元</span>
+              <button class="btn-pay paid-state" onclick="toggleItemPaid('${r.id}',${idx})"><span class="pay-icon">✅</span> 已還</button>`;
+          } else {
+            cls='is-unpaid';
+            rightHtml=`<span class="item-amount">${item.amount} 元</span>
+              <button class="btn-pay unpaid-state" onclick="toggleItemPaid('${r.id}',${idx})"><span class="pay-icon">🪙</span> 未還</button>`;
+          }
+          return`<div class="item-row ${cls}">
+            <div class="item-left"><span class="item-emoji">${p.em}</span><span class="item-name">${item.consumer}</span><span class="item-detail">｜${item.item}</span></div>
+            <div class="item-right">${rightHtml}</div>
+          </div>`;
+        }).join('');
+        return`<div class="rec-card">
+          <div class="rec-top">
+            <span class="rec-name">${r.title}</span>
+            <span class="badge ${allClear?'all-clear':'partial'}">${allClear?'✓ 完全結清':'尚有欠款'}</span>
+          </div>
+          <div class="rec-meta-line">${r.date} · ${r.payer} 付錢</div>
+          ${itemsHtml}
+          <div class="rec-footer">
+            <span class="record-total">合計 ${r.total} 元</span>
+            <div class="record-actions">
+              <button class="btn-action btn-edit" onclick="openEditModal('${r.id}')">編輯</button>
+              <button class="btn-action btn-delete" onclick="deleteRecord('${r.id}')">刪除</button>
+            </div>
+          </div>
         </div>`;
       }).join('');
-      return`<div class="record-card">
-        <div class="record-header">
-          <div><div class="record-title">${r.title}</div><div class="record-meta">${r.date} · ${r.payer} 付錢</div></div>
-          <span class="badge ${allClear?'all-clear':'partial'}">${allClear?'✓ 完全結清':'尚有欠款'}</span>
-        </div>
-        ${itemsHtml}
-        <div class="record-footer">
-          <span class="record-total">合計 ${r.total} 元</span>
-          <div class="record-actions">
-            <button class="btn-action btn-edit" onclick="openEditModal('${r.id}')">編輯</button>
-            <button class="btn-action btn-delete" onclick="deleteRecord('${r.id}')">刪除</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
+    }
   }
 
-  // ── 轉帳儲值（grouped by pair, collapsible）──
-  let transfers=[...(state.transfers||[])].sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt-b.createdAt);
-  if(person)transfers=transfers.filter(t=>transferInvolvePerson(t,person));
-
-  const transferEl=document.getElementById('transferList');
-  if(!transfers.length){
-    transferEl.innerHTML=`<div class="empty-state"><div class="icon">📭</div>沒有轉帳儲值紀錄</div>`;
-  } else {
-    // Group by pair key (sorted names so A→B and B→A are separate)
-    const groups={};
-    transfers.forEach(t=>{
-      const key=`${t.from}→${t.to}`;
-      if(!groups[key])groups[key]={from:t.from,to:t.to,items:[]};
-      groups[key].items.push(t);
-    });
-
-    transferEl.innerHTML=Object.entries(groups).map(([key,g])=>{
-      const pFrom=pc(g.from),pTo=pc(g.to);
-      const totalAmt=g.items.reduce((s,t)=>s+t.amount,0);
-      const totalSurplus=g.items.reduce((s,t)=>s+(t.surplus||0),0);
-      const count=g.items.length;
-      const groupId='tg_'+state.members.indexOf(g.from)+'_'+state.members.indexOf(g.to);
-
-      const rowsHtml=g.items.map(t=>`
-        <div class="tgroup-row">
-          <div class="tgroup-row-left">
-            <span class="tgroup-row-meta">${t.date}${t.note?' · '+t.note:''}</span>
-            ${t.surplus>0?`<span class="tgroup-row-surplus">餘額 ${Math.round(t.surplus)} 元</span>`:'<span class="tgroup-row-surplus" style="color:var(--text-muted)">已全數抵消</span>'}
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="tgroup-row-amt">${t.amount} 元</span>
-            <button class="btn-action btn-delete" onclick="deleteTransfer('${t.id}')">刪除</button>
-          </div>
-        </div>`).join('');
-
-      return`<div class="tgroup-card">
-        <div class="tgroup-header" onclick="toggleGroup('${groupId}')">
-          <div>
+  // ── 儲值 ──
+  if(historyMode==='transfer'){
+    let transfers=[...(state.transfers||[])].sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt-b.createdAt);
+    if(person)transfers=transfers.filter(t=>transferInvolvePerson(t,person));
+    const transferEl=document.getElementById('transferList');
+    if(!transfers.length){
+      transferEl.innerHTML=`<div class="empty-state"><div class="icon">📭</div>沒有儲值紀錄</div>`;
+    } else {
+      const groups={};
+      transfers.forEach(t=>{
+        const key=`${t.from}→${t.to}`;
+        if(!groups[key])groups[key]={from:t.from,to:t.to,items:[]};
+        groups[key].items.push(t);
+      });
+      transferEl.innerHTML=Object.entries(groups).map(([key,g])=>{
+        const pFrom=pc(g.from),pTo=pc(g.to);
+        const totalAmt=g.items.reduce((s,t)=>s+t.amount,0);
+        const totalSurplus=g.items.reduce((s,t)=>s+(t.surplus||0),0);
+        const totalUsed=totalAmt-totalSurplus;
+        const groupId='tg_'+state.members.indexOf(g.from)+'_'+state.members.indexOf(g.to);
+        const rowsHtml=g.items.map(t=>`
+          <div class="tgroup-row">
+            <div class="tgroup-row-left">
+              <span class="tgroup-row-meta">${t.date}${t.note?' · '+t.note:''}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="tgroup-row-amt">${t.amount} 元</span>
+              <button class="btn-action btn-delete" onclick="deleteTransfer('${t.id}')">刪除</button>
+            </div>
+          </div>`).join('');
+        const summaryHtml=`
+          <div class="tgroup-summary-block">
+            <div class="tgroup-sum-row">
+              <span class="tgroup-sum-label">儲值總額</span>
+              <span class="tgroup-sum-val">${Math.round(totalAmt)} 元</span>
+            </div>
+            <div class="tgroup-sum-row">
+              <span class="tgroup-sum-label">已抵消費</span>
+              <span class="tgroup-sum-val">－${Math.round(totalUsed)} 元</span>
+            </div>
+            <div class="tgroup-sum-row tgroup-sum-total">
+              <span class="tgroup-sum-label-total">目前餘額</span>
+              <span class="tgroup-sum-val-total">＋${Math.round(totalSurplus)} 元</span>
+            </div>
+          </div>`;
+        return`<div class="tgroup-card">
+          <div class="tgroup-header" onclick="toggleGroup('${groupId}')">
             <div class="tgroup-parties">
               <span style="color:${pFrom.fg}">${pFrom.em} ${g.from}</span>
               <span style="color:var(--text-muted);font-size:.8rem;font-weight:400">→</span>
               <span style="color:${pTo.fg}">${pTo.em} ${g.to}</span>
             </div>
-            <div style="font-size:.74rem;color:var(--text-muted);margin-top:3px">${count} 筆儲值</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <div class="tgroup-summary">
-              <span class="tgroup-total">${totalAmt} 元</span>
-              ${totalSurplus>0?`<span class="tgroup-surplus">餘額 ${Math.round(totalSurplus)} 元</span>`:''}
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="tgroup-surplus" style="font-size:.84rem">
+                ${totalSurplus>0.01?`餘額 ${Math.round(totalSurplus)} 元`:'已全數抵消'}
+              </span>
+              <span class="tgroup-chevron" id="${groupId}_chevron">▼</span>
             </div>
-            <span class="tgroup-chevron" id="${groupId}_chevron">▼</span>
           </div>
-        </div>
-        <div class="tgroup-body" id="${groupId}_body">${rowsHtml}</div>
-      </div>`;
-    }).join('');
+          <div class="tgroup-body" id="${groupId}_body">
+            ${rowsHtml}
+            ${summaryHtml}
+          </div>
+        </div>`;
+      }).join('');
+    }
   }
 }
 
@@ -971,9 +975,9 @@ function startApp(data){
     state.logs=data.logs||[];
   }
   if(!state.members.length){state.members=['愛咪','子芸','俐安','芳芳'];save()}
-  document.getElementById('addDate').value=new Date().toISOString().slice(0,10);
-  document.getElementById('tfDate').value=new Date().toISOString().slice(0,10);
-  renderAddForm();renderDebts();
+  renderAddForm();
+  renderTransferForm();
+  switchTab('add');
 
   window._fbListen(data=>{
     if(_ignoreNext){_ignoreNext=false;return}
