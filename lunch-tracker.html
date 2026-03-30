@@ -22,24 +22,18 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const DOC = doc(db, 'app', 'shared');
 
-// ── Save to Firestore ──
 window._fbSave = async function(state) {
   try {
-    await setDoc(DOC, { members: state.members, records: state.records });
+    await setDoc(DOC, { members: state.members, records: state.records, transfers: state.transfers, logs: state.logs });
   } catch(e) { console.error('儲存失敗', e); }
 };
 
-// ── Listen for realtime changes ──
 window._fbListen = function(onUpdate) {
   return onSnapshot(DOC, (snap) => {
-    if (snap.exists()) {
-      const data = snap.data();
-      onUpdate(data);
-    }
+    if (snap.exists()) onUpdate(snap.data());
   });
 };
 
-// ── Initial load ──
 window._fbLoad = async function() {
   const snap = await getDoc(DOC);
   return snap.exists() ? snap.data() : null;
@@ -50,220 +44,203 @@ document.dispatchEvent(new Event('firebase-ready'));
 </script>
 <style>
   :root {
-    --bg: #f0ede8;
-    --card: #ffffff;
-    --text: #1c1c1e;
-    --text-muted: #8e8e93;
-    --border: #e2ddd7;
-    --shadow: 0 2px 12px rgba(0,0,0,0.06);
-    --radius: 14px;
-
-    /* Semantic colors */
-    --green: #1a7a4a;
-    --green-bg: #e6f5ed;
-    --red: #c0392b;
-    --red-bg: #fdecea;
-
-    /* Header: neutral warm gray */
-    --header-bg: #e8e4df;
-    --header-text: #3a3530;
-
-    /* Tab active: dark charcoal */
-    --tab-active: #2c2825;
-
-    /* Person palette — avoids red & green */
-    --p0-bg:#dbeafe; --p0-fg:#1e40af; --p0-em:🐳;
-    --p1-bg:#fef3c7; --p1-fg:#92400e; --p1-em:🌻;
-    --p2-bg:#ede9fe; --p2-fg:#5b21b6; --p2-em:🍇;
-    --p3-bg:#fce7f3; --p3-fg:#9d174d; --p3-em:🌸;
-    --p4-bg:#cffafe; --p4-fg:#155e75; --p4-em:🐬;
-    --p5-bg:#ffedd5; --p5-fg:#7c2d12; --p5-em:🍊;
-    --p6-bg:#f1f5f9; --p6-fg:#334155; --p6-em:🐘;
-    --p7-bg:#fdf2f8; --p7-fg:#701a75; --p7-em:🦩;
+    --bg:#f0ede8; --card:#fff; --text:#1c1c1e; --text-muted:#8e8e93;
+    --border:#e2ddd7; --shadow:0 2px 12px rgba(0,0,0,0.06); --radius:14px;
+    --green:#1a7a4a; --green-bg:#e6f5ed;
+    --red:#c0392b; --red-bg:#fdecea;
+    --blue:#3949ab; --blue-bg:#eef0fb;
+    --amber:#92400e; --amber-bg:#fef3c7;
+    --header-bg:#e8e4df; --header-text:#3a3530;
+    --tab-active:#2c2825;
   }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:48px}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 48px; }
+  /* HEADER */
+  header{background:var(--header-bg);padding:14px 16px;display:flex;align-items:center;justify-content:flex-start;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border)}
+  header h1{font-size:1rem;font-weight:600;color:var(--header-text);letter-spacing:.04em}
+  .hdr-btns{margin-left:auto;display:flex;gap:5px;flex-shrink:0}
+  .hdr-btn{background:rgba(0,0,0,.07);border:none;border-radius:7px;color:var(--header-text);padding:5px 9px;cursor:pointer;font-size:.75rem;font-family:inherit;font-weight:500}
+  .hdr-btn:hover{background:rgba(0,0,0,.13)}
 
-  /* ── HEADER ── */
-  header {
-    background: var(--header-bg);
-    padding: 16px 16px 12px;
-    display: flex; align-items: center; justify-content: center;
-    position: sticky; top: 0; z-index: 100;
-    border-bottom: 1px solid var(--border);
-  }
-  header h1 { font-size: 1.05rem; font-weight: 600; color: var(--header-text); letter-spacing: 0.04em; }
-  .btn-members-icon {
-    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-    background: rgba(0,0,0,0.07); border: none; border-radius: 8px;
-    color: var(--header-text); padding: 6px 10px; cursor: pointer; font-size: 0.78rem; font-family: inherit;
-    font-weight: 500;
-  }
-  .btn-members-icon:hover { background: rgba(0,0,0,0.12); }
+  /* TABS */
+  .container{max-width:520px;margin:0 auto;padding:14px 14px 0}
+  .tabs{display:flex;background:var(--card);border-radius:var(--radius);padding:4px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .tab-btn{flex:1;padding:10px 4px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:.88rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .18s}
+  .tab-btn.active{background:var(--tab-active);color:#fff}
+  .tab-content{display:none}.tab-content.active{display:block}
 
-  /* ── TABS ── */
-  .container { max-width: 520px; margin: 0 auto; padding: 14px 14px 0; }
-  .tabs { display: flex; background: var(--card); border-radius: var(--radius); padding: 4px; margin-bottom: 14px; box-shadow: var(--shadow); }
-  .tab-btn { flex: 1; padding: 10px 6px; border: none; background: none; border-radius: 10px; font-family: inherit; font-size: 0.9rem; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.18s; }
-  .tab-btn.active { background: var(--tab-active); color: #fff; }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+  /* CARDS */
+  .card{background:var(--card);border-radius:var(--radius);padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .card-title{font-size:.82rem;font-weight:700;margin-bottom:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
 
-  /* ── CARDS ── */
-  .card { background: var(--card); border-radius: var(--radius); padding: 15px; margin-bottom: 12px; box-shadow: var(--shadow); }
-  .card-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  /* DEBT PAGE */
+  .filter-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .filter-row label{font-size:.82rem;color:var(--text-muted)}
+  select{border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:.82rem;background:var(--bg);color:var(--text);cursor:pointer;outline:none}
 
-  /* ── DEBT PAGE ── */
-  .filter-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .filter-row label { font-size: 0.82rem; color: var(--text-muted); }
-  select { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-family: inherit; font-size: 0.82rem; background: var(--bg); color: var(--text); cursor: pointer; outline: none; }
+  .person-debt-card{border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+  .person-debt-header{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;font-weight:700;font-size:.9rem}
+  .pname{display:flex;align-items:center;gap:8px}
+  .person-emoji{font-size:1.1rem;line-height:1}
+  .person-debt-total{font-family:'DM Mono',monospace;font-size:.95rem;font-weight:700;color:var(--text)}
+  .person-debt-rows{background:white}
+  .person-debt-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;font-size:.84rem;border-top:1px solid var(--border)}
+  .to-whom{color:var(--text-muted)}.to-whom strong{color:var(--text);font-weight:600}
+  .row-amt{font-family:'DM Mono',monospace;font-weight:700;font-size:.88rem;color:var(--text)}
+  /* Balance surplus row */
+  .balance-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;font-size:.82rem;border-top:1px dashed var(--border);background:#f8f8f8}
+  .balance-label{color:var(--text-muted);display:flex;align-items:center;gap:5px}
+  .balance-amt{font-family:'DM Mono',monospace;font-weight:700;font-size:.85rem;color:var(--green)}
+  .no-debt{text-align:center;color:var(--text-muted);padding:24px 0;font-size:.88rem}
 
-  .person-debt-card { border-radius: 12px; margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
-  .person-debt-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 11px 14px; font-weight: 700; font-size: 0.92rem;
-  }
-  .pname { display: flex; align-items: center; gap: 8px; }
-  .person-emoji { font-size: 1.1rem; line-height: 1; }
-  .person-debt-total { font-family: 'DM Mono', monospace; font-size: 0.95rem; font-weight: 700; color: var(--text); }
-  .person-debt-rows { background: white; }
-  .person-debt-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 9px 14px; font-size: 0.85rem; border-top: 1px solid var(--border);
-  }
-  .to-whom { color: var(--text-muted); }
-  .to-whom strong { color: var(--text); font-weight: 600; }
-  .row-amt { font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.88rem; color: var(--text); }
-  .no-debt { text-align: center; color: var(--text-muted); padding: 24px 0; font-size: 0.88rem; }
+  /* FORM */
+  .form-group{margin-bottom:13px}
+  .form-group>label{display:block;font-size:.75rem;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+  input[type=text],input[type=number],input[type=date],select.full{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:.9rem;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
+  input:focus,select.full:focus{border-color:#aaa}
+  .consumers-box{border:1px solid var(--border);border-radius:10px;padding:11px;background:var(--bg)}
+  .consumer-row{display:grid;grid-template-columns:1fr 1fr 70px 28px;gap:6px;align-items:center;margin-bottom:7px}
+  .consumer-row input,.consumer-row select{border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-family:inherit;font-size:.82rem;background:white;outline:none;width:100%}
+  .btn-remove{width:28px;height:28px;border:none;background:var(--red-bg);color:var(--red);border-radius:7px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+  .btn-add-item{background:none;border:1.5px dashed #bbb;color:var(--text-muted);border-radius:8px;padding:7px 14px;font-family:inherit;font-size:.83rem;cursor:pointer;font-weight:500;margin-top:4px}
+  .total-row{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:1rem;padding-top:12px;border-top:1px solid var(--border);margin-top:6px}
+  .total-row .total-amt{font-family:'DM Mono',monospace;color:var(--text);font-size:1.1rem}
+  .btn-submit{width:100%;background:var(--tab-active);color:white;border:none;border-radius:10px;padding:14px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:13px;transition:opacity .2s,transform .1s}
+  .btn-submit:active{transform:scale(.98)}.btn-submit:hover{opacity:.85}
+  .type-switcher{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:16px}
+  .type-btn{flex:1;padding:8px;border:none;background:none;border-radius:8px;font-family:inherit;font-size:.88rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .18s}
+  .type-btn.active{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+  .transfer-form{display:none}.transfer-form.active{display:block}
+  .expense-form{display:none}.expense-form.active{display:block}
 
-  /* ── FORM ── */
-  .form-group { margin-bottom: 13px; }
-  .form-group > label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
-  input[type=text], input[type=number], input[type=date], select.full {
-    width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px;
-    font-family: inherit; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s;
-  }
-  input:focus, select.full:focus { border-color: #aaa; }
+  /* HISTORY */
+  .history-filter-card{background:var(--card);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .history-filter-card .card-title{margin:0;white-space:nowrap}
+  .history-filters{display:flex;gap:6px;flex-shrink:0}
+  .record-card{border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px;background:var(--card);box-shadow:var(--shadow)}
+  .record-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+  .record-title{font-weight:700;font-size:.95rem}
+  .record-meta{font-size:.76rem;color:var(--text-muted);margin-top:3px}
+  .badge{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;margin-left:8px}
+  .badge.all-clear{background:var(--green-bg);color:var(--green)}
+  .badge.partial{background:var(--red-bg);color:var(--red)}
+  .item-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:9px;margin-bottom:5px}
+  .item-row.is-paid{background:var(--green-bg)}.item-row.is-unpaid{background:#fafaf9;border:1px solid var(--border)}.item-row.is-self{background:#f5f5f5}
+  .item-left{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+  .item-emoji{font-size:1rem;flex-shrink:0}
+  .item-name{font-weight:600;white-space:nowrap;font-size:.86rem}
+  .item-detail{color:var(--text-muted);font-size:.83rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item-right{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px}
+  .item-amount{font-family:'DM Mono',monospace;font-weight:700;font-size:.85rem;color:var(--text)}
+  .item-self-label{font-size:.68rem;color:var(--text-muted);background:#ebebeb;padding:2px 7px;border-radius:10px}
+  .btn-pay{border:none;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;padding:5px 10px;font-size:.75rem;font-weight:600;white-space:nowrap;transition:all .15s}
+  .btn-pay.unpaid-state{background:var(--red-bg);color:var(--red)}
+  .btn-pay.paid-state{background:var(--green-bg);color:var(--green)}
+  .pay-icon{font-size:.9rem}
+  .record-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+  .record-total{font-family:'DM Mono',monospace;font-weight:700;font-size:.88rem;color:var(--text)}
+  .record-actions{display:flex;gap:6px}
+  .btn-action{border:none;border-radius:8px;padding:6px 12px;font-family:inherit;font-size:.76rem;font-weight:600;cursor:pointer}
+  .btn-edit{background:#e8e8e8;color:#555}.btn-delete{background:#3a3a3a;color:#fff}
+  .transfer-card{border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px;background:var(--card);box-shadow:var(--shadow)}
+  .transfer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .transfer-parties{display:flex;align-items:center;gap:8px;font-size:.9rem}
+  .transfer-arrow-icon{color:var(--text-muted);font-size:.85rem}
+  .transfer-amounts{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;margin-left:10px}
+  .transfer-main-amt{font-family:'DM Mono',monospace;font-weight:700;font-size:1rem;color:var(--text)}
+  .transfer-surplus{font-family:'DM Mono',monospace;font-weight:700;font-size:.88rem;color:var(--green)}
+  .transfer-bottom{display:flex;align-items:center;justify-content:space-between}
+  .transfer-meta{font-size:.76rem;color:var(--text-muted)}
+  .badge-transfer{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--blue-bg);color:var(--blue);white-space:nowrap;flex-shrink:0}
 
-  .consumers-box { border: 1px solid var(--border); border-radius: 10px; padding: 11px; background: var(--bg); }
-  .consumer-row { display: grid; grid-template-columns: 1fr 1fr 70px 28px; gap: 6px; align-items: center; margin-bottom: 7px; }
-  .consumer-row input, .consumer-row select { border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; font-family: inherit; font-size: 0.82rem; background: white; outline: none; width: 100%; }
-  .consumer-row input:focus, .consumer-row select:focus { border-color: #aaa; }
-  .btn-remove { width: 28px; height: 28px; border: none; background: var(--red-bg); color: var(--red); border-radius: 7px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
-  .btn-add-item { background: none; border: 1.5px dashed #bbb; color: var(--text-muted); border-radius: 8px; padding: 7px 14px; font-family: inherit; font-size: 0.83rem; cursor: pointer; font-weight: 500; margin-top: 4px; }
-  .btn-add-item:hover { border-color: #888; color: var(--text); }
+  /* MODALS */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:flex-end;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px 16px 40px;width:100%;max-width:520px;animation:slideUp .22s ease;max-height:90vh;overflow-y:auto}
+  @keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .modal-title{font-size:1rem;font-weight:700}
+  .btn-close-modal{background:var(--bg);border:none;border-radius:8px;padding:6px 12px;font-family:inherit;cursor:pointer;font-size:.85rem;color:var(--text-muted)}
+  .member-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px}
+  .member-chip{display:flex;align-items:center;gap:5px;background:#f0ede8;color:var(--text);border-radius:20px;padding:5px 11px;font-size:.86rem;font-weight:600}
+  .member-chip button{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;line-height:1;padding:0}
+  .add-member-row{display:flex;gap:8px}
+  .add-member-row input{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-family:inherit;font-size:.9rem;background:var(--bg);outline:none}
+  .btn-add-member{background:var(--tab-active);color:white;border:none;border-radius:10px;padding:10px 16px;font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer}
+  .btn-save-paid{width:100%;background:var(--tab-active);color:white;border:none;border-radius:10px;padding:12px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:14px}
+  .edit-paid-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+  .edit-paid-title{font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+  .edit-item-row{display:grid;grid-template-columns:1fr 1fr 70px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+  .edit-item-row:last-child{border-bottom:none}
+  .edit-item-row input,.edit-item-row select{border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:.82rem;background:white;outline:none;width:100%}
+  .toggle-switch{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0}
+  .toggle-switch input{opacity:0;width:0;height:0}
+  .toggle-slider{position:absolute;inset:0;background:#ccc;border-radius:22px;cursor:pointer;transition:.2s}
+  .toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}
+  input:checked+.toggle-slider{background:var(--green)}
+  input:checked+.toggle-slider:before{transform:translateX(16px)}
 
-  .total-row { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 1rem; padding-top: 12px; border-top: 1px solid var(--border); margin-top: 6px; }
-  .total-row .total-amt { font-family: 'DM Mono', monospace; color: var(--text); font-size: 1.1rem; }
-  .btn-submit { width: 100%; background: var(--tab-active); color: white; border: none; border-radius: 10px; padding: 14px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 13px; transition: opacity 0.2s, transform 0.1s; }
-  .btn-submit:active { transform: scale(0.98); }
-  .btn-submit:hover { opacity: 0.85; }
+  /* LOG */
+  .log-entry{padding:10px 0;border-bottom:1px solid var(--border);font-size:.84rem}
+  .log-entry:last-child{border-bottom:none}
+  .log-time{font-size:.72rem;color:var(--text-muted);margin-bottom:3px}
+  .log-tag{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-right:5px}
+  .log-tag.add{background:var(--green-bg);color:var(--green)}
+  .log-tag.del{background:var(--red-bg);color:var(--red)}
+  .log-tag.edit{background:var(--blue-bg);color:var(--blue)}
+  .log-tag.transfer{background:var(--amber-bg);color:var(--amber)}
+  .log-empty{text-align:center;color:var(--text-muted);padding:20px 0;font-size:.88rem}
 
-  /* ── HISTORY ── */
-  .history-filter-card { background: var(--card); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; }
-  .history-filter-card .card-title { margin: 0; }
+  .empty-state{text-align:center;color:var(--text-muted);padding:32px 0;font-size:.88rem}
+  .empty-state .icon{font-size:2.2rem;margin-bottom:8px}
 
-  .record-card { border: 1px solid var(--border); border-radius: 12px; padding: 13px; margin-bottom: 10px; background: var(--card); box-shadow: var(--shadow); }
-  .record-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .record-title { font-weight: 700; font-size: 0.95rem; }
-  .record-meta { font-size: 0.76rem; color: var(--text-muted); margin-top: 3px; }
+  /* Collapsible transfer group */
+  .tgroup-card{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:var(--card);box-shadow:var(--shadow);overflow:hidden}
+  .tgroup-header{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;cursor:pointer;user-select:none}
+  .tgroup-header:active{background:#f8f8f8}
+  .tgroup-parties{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:700}
+  .tgroup-summary{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .tgroup-total{font-family:'DM Mono',monospace;font-weight:700;font-size:.95rem;color:var(--text)}
+  .tgroup-surplus{font-family:'DM Mono',monospace;font-weight:700;font-size:.82rem;color:var(--green)}
+  .tgroup-chevron{font-size:.8rem;color:var(--text-muted);margin-left:8px;transition:transform .2s;flex-shrink:0}
+  .tgroup-chevron.open{transform:rotate(180deg)}
+  .tgroup-body{display:none;border-top:1px solid var(--border)}
+  .tgroup-body.open{display:block}
+  .tgroup-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:.84rem}
+  .tgroup-row:last-child{border-bottom:none}
+  .tgroup-row-left{display:flex;flex-direction:column;gap:2px}
+  .tgroup-row-amt{font-family:'DM Mono',monospace;font-weight:700;font-size:.88rem;color:var(--text)}
+  .tgroup-row-surplus{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--green)}
+  .tgroup-row-meta{font-size:.74rem;color:var(--text-muted)}
 
-  /* Status badge */
-  .badge { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; margin-left: 8px; }
-  .badge.all-clear { background: var(--green-bg); color: var(--green); }
-  .badge.partial { background: var(--red-bg); color: var(--red); }
+  .section-label{font-size:.8rem;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;padding:0 2px}
 
-  /* Item rows */
-  .item-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 9px; margin-bottom: 5px; }
-  .item-row.is-paid { background: var(--green-bg); }
-  .item-row.is-unpaid { background: #fafaf9; border: 1px solid var(--border); }
-  .item-row.is-self { background: #f5f5f5; }
-
-  .item-left { display: flex; align-items: center; gap: 7px; min-width: 0; flex: 1; }
-  .item-emoji { font-size: 1rem; flex-shrink: 0; }
-  .item-name { font-weight: 600; white-space: nowrap; font-size: 0.86rem; }
-  .item-detail { color: var(--text-muted); font-size: 0.83rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  .item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 8px; }
-  .item-amount { font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.85rem; color: var(--text); }
-  .item-row.is-unpaid .item-amount { color: var(--text); }
-  .item-row.is-paid .item-amount { color: var(--text); }
-  .item-self-label { font-size: 0.68rem; color: var(--text-muted); background: #ebebeb; padding: 2px 7px; border-radius: 10px; }
-
-  /* Payment toggle button */
-  .btn-pay {
-    border: none; border-radius: 8px; cursor: pointer; font-family: inherit;
-    display: flex; align-items: center; gap: 5px;
-    padding: 5px 10px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; transition: all 0.15s;
-  }
-  .btn-pay.unpaid-state { background: var(--red-bg); color: var(--red); }
-  .btn-pay.unpaid-state:hover { background: #f5c6c2; }
-  .btn-pay.paid-state { background: var(--green-bg); color: var(--green); }
-  .btn-pay.paid-state:hover { background: #c5e8d4; }
-  .pay-icon { font-size: 0.9rem; }
-
-  .record-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-  .record-total { font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.88rem; color: var(--text); }
-  .record-actions { display: flex; gap: 6px; }
-  .btn-action { border: none; border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 0.76rem; font-weight: 600; cursor: pointer; }
-  .btn-edit { background: #eef0fb; color: #3949ab; }
-  .btn-delete { background: #3a3a3a; color: #fff; }
-
-  /* Edit modal for paid status */
-  .edit-paid-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-  .edit-paid-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
-  .edit-paid-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: var(--bg); margin-bottom: 6px; font-size: 0.85rem; }
-  .edit-paid-row .epr-left { display: flex; align-items: center; gap: 7px; }
-  .toggle-switch { position: relative; display: inline-block; width: 38px; height: 22px; flex-shrink: 0; }
-  .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider { position: absolute; inset: 0; background: #ccc; border-radius: 22px; cursor: pointer; transition: 0.2s; }
-  .toggle-slider:before { content:''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.2s; }
-  input:checked + .toggle-slider { background: var(--green); }
-  input:checked + .toggle-slider:before { transform: translateX(16px); }
-
-  .empty-state { text-align: center; color: var(--text-muted); padding: 32px 0; font-size: 0.88rem; }
-  .empty-state .icon { font-size: 2.2rem; margin-bottom: 8px; }
-
-  /* ── MODALS ── */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; align-items: flex-end; justify-content: center; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--card); border-radius: 20px 20px 0 0; padding: 20px 16px 40px; width: 100%; max-width: 520px; animation: slideUp 0.22s ease; max-height: 90vh; overflow-y: auto; }
-  @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .modal-title { font-size: 1rem; font-weight: 700; }
-  .btn-close-modal { background: var(--bg); border: none; border-radius: 8px; padding: 6px 12px; font-family: inherit; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
-  .member-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; min-height: 36px; }
-  .member-chip { display: flex; align-items: center; gap: 5px; background: #f0ede8; color: var(--text); border-radius: 20px; padding: 5px 11px; font-size: 0.86rem; font-weight: 600; }
-  .member-chip button { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0; }
-  .add-member-row { display: flex; gap: 8px; }
-  .add-member-row input { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 13px; font-family: inherit; font-size: 0.9rem; background: var(--bg); outline: none; }
-  .add-member-row input:focus { border-color: #aaa; }
-  .btn-add-member { background: var(--tab-active); color: white; border: none; border-radius: 10px; padding: 10px 16px; font-family: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
-  .btn-save-paid { width: 100%; background: var(--tab-active); color: white; border: none; border-radius: 10px; padding: 12px; font-family: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 14px; }
-
-  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--tab-active); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.86rem; font-weight: 500; z-index: 1000; transition: transform 0.28s ease; pointer-events: none; }
-  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--tab-active);color:white;padding:10px 20px;border-radius:20px;font-size:.86rem;font-weight:500;z-index:1000;transition:transform .28s ease;pointer-events:none}
+  #toast.show{transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 
 <header>
   <h1>🤝 大人之間的交易</h1>
-  <button class="btn-members-icon" onclick="openMembersModal()">👥 成員</button>
+  <div class="hdr-btns">
+    <button class="hdr-btn" onclick="openLogModal()">📋 日誌</button>
+    <button class="hdr-btn" onclick="openMembersModal()">👥 成員</button>
+  </div>
 </header>
 
 <div class="container">
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('debt')">待還款</button>
+    <button class="tab-btn active" onclick="switchTab('debt')">恩怨情仇</button>
     <button class="tab-btn" onclick="switchTab('add')">新增</button>
-    <button class="tab-btn" onclick="switchTab('history')">記錄</button>
+    <button class="tab-btn" onclick="switchTab('history')">帳本</button>
   </div>
 
-  <!-- 待還款 -->
+  <!-- 恩怨情仇 -->
   <div id="tab-debt" class="tab-content active">
     <div class="card">
-      <div class="card-title">待還款總覽</div>
+      <div class="card-title">目前誰欠誰</div>
       <div class="filter-row">
         <label>查看誰的</label>
         <select id="debtFilter" onchange="renderDebts()"><option value="">全部</option></select>
@@ -276,44 +253,55 @@ document.dispatchEvent(new Event('firebase-ready'));
   <div id="tab-add" class="tab-content">
     <div class="card">
       <div class="card-title" id="addFormTitle">新增紀錄</div>
-      <div class="form-group">
-        <label>日期</label>
-        <input type="date" id="addDate" class="full">
+      <div class="type-switcher" id="typeSwitcher">
+        <button class="type-btn active" onclick="switchType('expense')">🧾 消費紀錄</button>
+        <button class="type-btn" onclick="switchType('transfer')">💸 轉帳儲值</button>
       </div>
-      <div class="form-group">
-        <label>店家名稱</label>
-        <input type="text" id="addTitle" placeholder="例：三商巧福、全家...">
-      </div>
-      <div class="form-group">
-        <label>誰付錢</label>
-        <select id="addPayer" class="full"><option value="">請選擇</option></select>
-      </div>
-      <div class="form-group">
-        <label>各人明細</label>
-        <div class="consumers-box">
-          <div id="consumerRows"></div>
-          <button class="btn-add-item" onclick="addConsumerRow()">＋ 新增一筆</button>
+      <div class="expense-form active" id="expenseForm">
+        <div class="form-group"><label>日期</label><input type="date" id="addDate" class="full"></div>
+        <div class="form-group"><label>店家名稱</label><input type="text" id="addTitle" placeholder="例：三商巧福、全家..."></div>
+        <div class="form-group"><label>誰付錢</label><select id="addPayer" class="full"><option value="">請選擇</option></select></div>
+        <div class="form-group">
+          <label>各人明細</label>
+          <div class="consumers-box">
+            <div id="consumerRows"></div>
+            <button class="btn-add-item" onclick="addConsumerRow()">＋ 新增一筆</button>
+          </div>
         </div>
+        <div class="total-row"><span>合計</span><span class="total-amt" id="totalAmt">0 元</span></div>
+        <button class="btn-submit" onclick="submitRecord()">儲存紀錄</button>
       </div>
-      <div class="total-row">
-        <span>合計</span>
-        <span class="total-amt" id="totalAmt">0 元</span>
+      <div class="transfer-form" id="transferForm">
+        <div class="form-group"><label>日期</label><input type="date" id="tfDate" class="full"></div>
+        <div class="form-group"><label>誰轉帳（付錢的人）</label><select id="tfFrom" class="full"><option value="">請選擇</option></select></div>
+        <div class="form-group"><label>轉給誰（收錢的人）</label><select id="tfTo" class="full"><option value="">請選擇</option></select></div>
+        <div class="form-group"><label>金額</label><input type="number" id="tfAmount" placeholder="例：500" min="0" class="full"></div>
+        <div class="form-group"><label>備註（選填）</label><input type="text" id="tfNote" placeholder="例：還上週的帳" class="full"></div>
+        <button class="btn-submit" onclick="submitTransfer()">儲存轉帳</button>
       </div>
-      <button class="btn-submit" onclick="submitRecord()">儲存紀錄</button>
     </div>
   </div>
 
-  <!-- 記錄 -->
+  <!-- 帳本 -->
   <div id="tab-history" class="tab-content">
     <div class="history-filter-card">
-      <div class="card-title">歷史紀錄</div>
-      <select id="historyFilter" onchange="renderHistory()">
-        <option value="unpaid">有未還款</option>
-        <option value="all">全部</option>
-        <option value="cleared">都還清了</option>
-      </select>
+      <div class="card-title">帳本</div>
+      <div class="history-filters">
+        <select id="historyPerson" onchange="renderHistory()"><option value="">所有人</option></select>
+        <select id="historyFilter" onchange="renderHistory()">
+          <option value="all">全部</option>
+          <option value="unpaid">尚有欠款</option>
+          <option value="cleared">完全結清</option>
+        </select>
+      </div>
     </div>
-    <div id="historyList"></div>
+    <!-- sub-tab switcher -->
+    <div class="type-switcher" style="margin-bottom:14px">
+      <button class="type-btn active" id="hSubExpenseBtn" onclick="switchHistorySub('expense')">🧾 消費紀錄</button>
+      <button class="type-btn" id="hSubTransferBtn" onclick="switchHistorySub('transfer')">💸 轉帳儲值</button>
+    </div>
+    <div id="expenseList"></div>
+    <div id="transferList" style="display:none"></div>
   </div>
 </div>
 
@@ -332,305 +320,447 @@ document.dispatchEvent(new Event('firebase-ready'));
   </div>
 </div>
 
-<!-- 編輯還款狀態 Modal -->
-<div class="modal-overlay" id="editPaidModal" onclick="closeModalOutside(event,'editPaidModal')">
+<!-- 編輯 Modal -->
+<div class="modal-overlay" id="editModal" onclick="closeModalOutside(event,'editModal')">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title" id="editPaidTitle">編輯紀錄</div>
-      <button class="btn-close-modal" onclick="closeModal('editPaidModal')">關閉</button>
+      <div class="modal-title" id="editModalTitle">編輯紀錄</div>
+      <button class="btn-close-modal" onclick="closeModal('editModal')">關閉</button>
     </div>
-    <div id="editPaidContent"></div>
-    <button class="btn-save-paid" onclick="saveEditPaid()">儲存</button>
+    <div id="editModalContent"></div>
+    <button class="btn-save-paid" onclick="saveEdit()">儲存</button>
   </div>
 </div>
 
-<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(240,237,232,0.92);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px">
-  <div style="font-size:2rem">🤝</div>
-  <div style="font-size:0.9rem;color:#8e8e93;font-family:'Noto Sans TC',sans-serif">連線中，請稍候…</div>
+<!-- 日誌 Modal -->
+<div class="modal-overlay" id="logModal" onclick="closeModalOutside(event,'logModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📋 異動日誌</div>
+      <button class="btn-close-modal" onclick="closeModal('logModal')">關閉</button>
+    </div>
+    <div id="logList"></div>
+  </div>
 </div>
 
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(240,237,232,.92);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+  <div style="font-size:2rem">🤝</div>
+  <div style="font-size:.9rem;color:#8e8e93;font-family:'Noto Sans TC',sans-serif">連線中，請稍候…</div>
+</div>
 <div id="toast"></div>
 
 <script>
-// ── Person palette (emoji + colors, avoid red/green) ──
-const PALETTE = [
-  { bg:'#dbeafe', fg:'#1e40af', em:'🐳' },
-  { bg:'#fef3c7', fg:'#92400e', em:'🌻' },
-  { bg:'#ede9fe', fg:'#5b21b6', em:'🍇' },
-  { bg:'#fce7f3', fg:'#9d174d', em:'🌸' },
-  { bg:'#cffafe', fg:'#155e75', em:'🐬' },
-  { bg:'#ffedd5', fg:'#7c2d12', em:'🍊' },
-  { bg:'#f1f5f9', fg:'#334155', em:'🐘' },
-  { bg:'#fdf2f8', fg:'#701a75', em:'🦩' },
+const PALETTE=[
+  {bg:'#dbeafe',fg:'#1e40af',em:'🐳'},
+  {bg:'#fef3c7',fg:'#92400e',em:'🌻'},
+  {bg:'#ede9fe',fg:'#5b21b6',em:'🍇'},
+  {bg:'#fce7f3',fg:'#9d174d',em:'🌸'},
+  {bg:'#cffafe',fg:'#155e75',em:'🐬'},
+  {bg:'#ffedd5',fg:'#7c2d12',em:'🍊'},
+  {bg:'#f1f5f9',fg:'#334155',em:'🐘'},
+  {bg:'#fdf2f8',fg:'#701a75',em:'🦩'},
 ];
-function pc(name) {
-  const idx = state.members.indexOf(name);
-  return PALETTE[(idx >= 0 ? idx : 0) % PALETTE.length];
+function pc(name){const i=state.members.indexOf(name);return PALETTE[(i>=0?i:0)%PALETTE.length]}
+
+let state={members:[],records:[],transfers:[],logs:[]};
+let _ignoreNext=false;
+function save(){_ignoreNext=true;window._fbSave(state)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function fmtTime(ts){const d=new Date(ts);return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+
+function addLog(type,desc){
+  if(!state.logs)state.logs=[];
+  state.logs.unshift({id:uid(),type,desc,ts:Date.now()});
+  if(state.logs.length>100)state.logs=state.logs.slice(0,100);
 }
 
-// ── State ──
-let state = { members: [], records: [] };
-let _unsubscribe = null;
-let _ignoreNext = false; // prevent echo after local save
-
-function save() {
-  _ignoreNext = true;
-  window._fbSave(state);
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
 }
 
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+// ── MODALS ──
+function openMembersModal(){document.getElementById('membersModal').classList.add('open');renderMembers()}
+function openLogModal(){document.getElementById('logModal').classList.add('open');renderLog()}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function closeModalOutside(e,id){if(e.target.id===id)closeModal(id)}
 
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2000);
-}
-
-// ── Modals ──
-function openMembersModal() { document.getElementById('membersModal').classList.add('open'); renderMembers(); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function closeModalOutside(e, id) { if (e.target.id === id) closeModal(id); }
-
-// ── Tabs ──
-function switchTab(name) {
-  ['debt','add','history'].forEach((n,i) => {
-    document.querySelectorAll('.tab-btn')[i].classList.toggle('active', n===name);
-    document.getElementById('tab-'+n).classList.toggle('active', n===name);
+// ── TABS ──
+function switchTab(name){
+  ['debt','add','history'].forEach((n,i)=>{
+    document.querySelectorAll('.tab-btn')[i].classList.toggle('active',n===name);
+    document.getElementById('tab-'+n).classList.toggle('active',n===name);
   });
-  if (name==='debt') renderDebts();
-  if (name==='history') renderHistory();
-  if (name==='add') renderAddForm();
+  if(name==='debt')renderDebts();
+  if(name==='history')renderHistory();
+  if(name==='add')renderAddForm();
 }
 
-// ── Members ──
-function renderMembers() {
-  const el = document.getElementById('memberList');
-  if (!state.members.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem">還沒有成員，加幾個吧！</p>'; return; }
-  el.innerHTML = state.members.map(m => {
-    const p = pc(m);
-    return `<div class="member-chip">${p.em} ${m}<button class="rm-member-btn" data-name="${m}">×</button></div>`;
+// ── TYPE SWITCHER ──
+let currentType='expense';
+function switchType(type){
+  if(editId)return;
+  currentType=type;
+  document.querySelectorAll('.type-btn').forEach((b,i)=>b.classList.toggle('active',['expense','transfer'][i]===type));
+  document.getElementById('expenseForm').classList.toggle('active',type==='expense');
+  document.getElementById('transferForm').classList.toggle('active',type==='transfer');
+}
+
+// ── MEMBERS ──
+function renderMembers(){
+  const el=document.getElementById('memberList');
+  if(!state.members.length){el.innerHTML='<p style="color:var(--text-muted);font-size:.85rem">還沒有成員，加幾個吧！</p>';return}
+  el.innerHTML=state.members.map(m=>{
+    const p=pc(m);
+    return`<div class="member-chip">${p.em} ${m}<button class="rm-member-btn" data-name="${m}">×</button></div>`;
   }).join('');
-  el.querySelectorAll('.rm-member-btn').forEach(btn => {
-    btn.addEventListener('click', () => removeMember(btn.dataset.name));
+  el.querySelectorAll('.rm-member-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>removeMember(btn.dataset.name));
   });
 }
-function addMember() {
-  const input = document.getElementById('newMemberName');
-  const name = input.value.trim();
-  if (!name) return;
-  if (state.members.includes(name)) { toast('這個名字已經有了'); return; }
-  state.members.push(name); save(); input.value = '';
-  renderMembers(); renderAddForm(); toast(`${name} 加入了 👋`);
+function addMember(){
+  const input=document.getElementById('newMemberName');
+  const name=input.value.trim();
+  if(!name)return;
+  if(state.members.includes(name)){toast('這個名字已經有了');return}
+  state.members.push(name);
+  addLog('add',`新增成員「${name}」`);
+  save();input.value='';renderMembers();renderAddForm();toast(`${name} 加入了 👋`);
 }
-function removeMember(name) {
-  state.members = state.members.filter(m=>m!==name);
-  save(); renderMembers(); toast(`已移除「${name}」`);
+function removeMember(name){
+  state.members=state.members.filter(m=>m!==name);
+  addLog('del',`移除成員「${name}」`);
+  save();renderMembers();toast(`已移除「${name}」`);
 }
 
-// ── Add form ──
-let editId = null;
-function renderAddForm() {
-  if (!editId) {
-    document.getElementById('addDate').value = new Date().toISOString().slice(0,10);
-    document.getElementById('addTitle').value = '';
-    document.getElementById('addPayer').value = '';
-    document.getElementById('consumerRows').innerHTML = '';
-    document.getElementById('addFormTitle').textContent = '新增紀錄';
+// ── LOG ──
+function renderLog(){
+  const el=document.getElementById('logList');
+  if(!state.logs||!state.logs.length){el.innerHTML='<div class="log-empty">目前沒有異動紀錄</div>';return}
+  const tagLabel={add:'新增',del:'刪除',edit:'編輯',transfer:'轉帳'};
+  el.innerHTML=state.logs.map(l=>`
+    <div class="log-entry">
+      <div class="log-time">${fmtTime(l.ts)}</div>
+      <span class="log-tag ${l.type}">${tagLabel[l.type]||l.type}</span>${l.desc}
+    </div>`).join('');
+}
+
+// ── ADD FORM ──
+let editId=null;
+function renderAddForm(){
+  if(!editId){
+    document.getElementById('addDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('addTitle').value='';
+    document.getElementById('addPayer').value='';
+    document.getElementById('consumerRows').innerHTML='';
+    document.getElementById('tfDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('tfAmount').value='';
+    document.getElementById('tfNote').value='';
+    document.getElementById('addFormTitle').textContent='新增紀錄';
     updateTotal();
   }
-  const payer = document.getElementById('addPayer');
-  const cur = payer.value;
-  payer.innerHTML = '<option value="">請選擇</option>' +
-    state.members.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
-  if (!document.getElementById('consumerRows').children.length) addConsumerRow();
+  const opts='<option value="">請選擇</option>'+state.members.map(m=>`<option value="${m}">${m}</option>`).join('');
+  const payer=document.getElementById('addPayer');
+  const cur=payer.value;
+  payer.innerHTML='<option value="">請選擇</option>'+state.members.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
+  document.getElementById('tfFrom').innerHTML=opts;
+  document.getElementById('tfTo').innerHTML=opts;
+  if(!document.getElementById('consumerRows').children.length)addConsumerRow();
 }
-
-function addConsumerRow(consumer='', item='', amount='') {
-  const row = document.createElement('div');
-  row.className = 'consumer-row';
-  row.innerHTML = `
+function addConsumerRow(consumer='',item='',amount=''){
+  const row=document.createElement('div');
+  row.className='consumer-row';
+  row.innerHTML=`
     <select onchange="updateTotal()">
       <option value="">誰吃的</option>
       ${state.members.map(m=>`<option value="${m}" ${m===consumer?'selected':''}>${m}</option>`).join('')}
     </select>
     <input type="text" placeholder="點了什麼" value="${item}">
     <input type="number" placeholder="金額" min="0" value="${amount}" oninput="updateTotal()">
-    <button class="btn-remove" onclick="this.parentElement.remove();updateTotal()">×</button>
-  `;
+    <button class="btn-remove" onclick="this.parentElement.remove();updateTotal()">×</button>`;
   document.getElementById('consumerRows').appendChild(row);
 }
-
-function updateTotal() {
-  let total = 0;
-  document.querySelectorAll('#consumerRows .consumer-row').forEach(r => {
-    total += parseFloat(r.querySelectorAll('input')[1]?.value) || 0;
-  });
-  document.getElementById('totalAmt').textContent = total + ' 元';
+function updateTotal(){
+  let t=0;
+  document.querySelectorAll('#consumerRows .consumer-row').forEach(r=>{t+=parseFloat(r.querySelectorAll('input')[1]?.value)||0});
+  document.getElementById('totalAmt').textContent=t+' 元';
 }
-
-function submitRecord() {
-  const date = document.getElementById('addDate').value;
-  const title = document.getElementById('addTitle').value.trim();
-  const payer = document.getElementById('addPayer').value;
-  if (!date || !title || !payer) { toast('請填日期、店家和付錢的人'); return; }
-  const items = [];
-  document.querySelectorAll('#consumerRows .consumer-row').forEach(r => {
-    const consumer = r.querySelectorAll('select')[0].value;
-    const itemName = r.querySelectorAll('input')[0].value.trim();
-    const amount = parseFloat(r.querySelectorAll('input')[1].value) || 0;
-    if (consumer && itemName && amount > 0) items.push({ consumer, item: itemName, amount, paid: false });
+function submitRecord(){
+  const date=document.getElementById('addDate').value;
+  const title=document.getElementById('addTitle').value.trim();
+  const payer=document.getElementById('addPayer').value;
+  if(!date||!title||!payer){toast('請填日期、店家和付錢的人');return}
+  const items=[];
+  document.querySelectorAll('#consumerRows .consumer-row').forEach(r=>{
+    const consumer=r.querySelectorAll('select')[0].value;
+    const itemName=r.querySelectorAll('input')[0].value.trim();
+    const amount=parseFloat(r.querySelectorAll('input')[1].value)||0;
+    if(consumer&&itemName&&amount>0)items.push({consumer,item:itemName,amount,paid:false});
   });
-  if (!items.length) { toast('至少要填一筆明細喔'); return; }
-
-  if (editId) {
-    const idx = state.records.findIndex(r=>r.id===editId);
-    if (idx !== -1) {
-      const old = state.records[idx];
-      const newItems = items.map(ni => {
-        const match = old.items.find(oi=>oi.consumer===ni.consumer&&oi.item===ni.item);
-        return { ...ni, paid: match ? match.paid : false };
-      });
-      state.records[idx] = { ...old, date, title, payer, items: newItems, total: newItems.reduce((s,i)=>s+i.amount,0) };
+  if(!items.length){toast('至少要填一筆明細喔');return}
+  if(editId){
+    const idx=state.records.findIndex(r=>r.id===editId);
+    if(idx!==-1){
+      const old=state.records[idx];
+      const newItems=items.map(ni=>{const m=old.items.find(oi=>oi.consumer===ni.consumer&&oi.item===ni.item);return{...ni,paid:m?m.paid:false}});
+      state.records[idx]={...old,date,title,payer,items:newItems,total:newItems.reduce((s,i)=>s+i.amount,0)};
+      addLog('edit',`編輯消費紀錄「${title}」`);
     }
-    editId = null; toast('已更新 ✏️');
+    editId=null;toast('已更新 ✏️');
   } else {
-    state.records.push({ id: uid(), date, title, payer, items, total: items.reduce((s,i)=>s+i.amount,0), createdAt: Date.now() });
+    const r={id:uid(),date,title,payer,items,total:items.reduce((s,i)=>s+i.amount,0),createdAt:Date.now()};
+    state.records.push(r);
+    addLog('add',`新增消費「${title}」共 ${r.total} 元，${payer} 付錢`);
     toast('已記下來 ✅');
   }
   save();
-  document.getElementById('consumerRows').innerHTML = '';
-  document.getElementById('addTitle').value = '';
-  renderAddForm(); updateTotal();
-  switchTab('history');
+  document.getElementById('consumerRows').innerHTML='';
+  document.getElementById('addTitle').value='';
+  renderAddForm();updateTotal();switchTab('history');
 }
 
-// ── Inline paid toggle (from history) ──
-function toggleItemPaid(recordId, itemIdx) {
-  const r = state.records.find(r=>r.id===recordId);
-  if (!r) return;
-  r.items[itemIdx].paid = !r.items[itemIdx].paid;
-  save(); renderHistory(); renderDebts();
-  toast(r.items[itemIdx].paid ? '✅ 已標記收款！' : '已取消');
-}
+// ── TRANSFER SUBMIT（含自動折抵）──
+function submitTransfer(){
+  const date=document.getElementById('tfDate').value;
+  const from=document.getElementById('tfFrom').value;
+  const to=document.getElementById('tfTo').value;
+  const amount=parseFloat(document.getElementById('tfAmount').value)||0;
+  const note=document.getElementById('tfNote').value.trim();
+  if(!date||!from||!to){toast('請填日期、轉帳人和收款人');return}
+  if(from===to){toast('轉帳人和收款人不能相同');return}
+  if(amount<=0){toast('請填正確金額');return}
 
-// ── Debt calc ──
-function calcDebts() {
-  const net = {};
-  const ensure = (a,b) => { if (!net[a]) net[a]={}; if (!net[a][b]) net[a][b]=0; };
-  state.records.forEach(r => {
-    r.items.forEach(item => {
-      if (!item.paid && item.consumer !== r.payer) {
-        ensure(item.consumer, r.payer);
-        net[item.consumer][r.payer] += item.amount;
+  // 自動折抵：from 欠 to 的未還款項目，按消費日期排序，整筆能覆蓋才標記
+  let remaining=amount;
+  const eligible=[];
+  state.records.forEach(r=>{
+    if(r.payer!==to)return; // 只找 to 是付款人的紀錄
+    r.items.forEach((item,idx)=>{
+      if(item.consumer===from&&!item.paid){
+        eligible.push({record:r,idx,amount:item.amount,date:r.date});
       }
     });
   });
-  const all = new Set([...Object.keys(net), ...Object.values(net).flatMap(v=>Object.keys(v))]);
-  const debts = {}, done = new Set();
-  all.forEach(a => all.forEach(b => {
-    if (a===b) return;
-    const key = [a,b].sort().join('|');
-    if (done.has(key)) return; done.add(key);
-    const diff = (net[a]?.[b]||0) - (net[b]?.[a]||0);
-    if (diff > 0) { if (!debts[a]) debts[a]=[]; debts[a].push({ to: b, amount: diff }); }
-    else if (diff < 0) { if (!debts[b]) debts[b]=[]; debts[b].push({ to: a, amount: -diff }); }
-  }));
-  return debts;
+  // 按消費日期排序（最早優先）
+  eligible.sort((a,b)=>a.date.localeCompare(b.date));
+  let settled=[];
+  for(const e of eligible){
+    if(remaining>=e.amount){
+      e.record.items[e.idx].paid=true;
+      remaining-=e.amount;
+      settled.push(`${e.record.title}/${e.record.items[e.idx].item}`);
+    }
+    // 不足就跳過
+  }
+
+  const transfer={id:uid(),date,from,to,amount,note,surplus:remaining,createdAt:Date.now()};
+  state.transfers.push(transfer);
+
+  const settledDesc=settled.length?`，自動結清：${settled.join('、')}`:'';
+  const surplusDesc=remaining>0?`，餘額 ${remaining} 元待抵`:'';
+  addLog('transfer',`${from} 轉帳給 ${to} ${amount} 元${note?' ('+note+')':''}${settledDesc}${surplusDesc}`);
+
+  save();
+  document.getElementById('tfAmount').value='';
+  document.getElementById('tfNote').value='';
+  toast(`已記錄 💸${settled.length?' 並自動結清 '+settled.length+' 筆':''}`);
+  switchTab('history');
 }
 
-function renderDebts() {
-  const sel = document.getElementById('debtFilter');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">全部</option>' +
-    state.members.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
-  const filter = sel.value;
-  const debts = calcDebts();
-  const people = Object.keys(debts).filter(p => !filter || p===filter);
-  const el = document.getElementById('debtList');
-  if (!people.length) { el.innerHTML = '<div class="no-debt">🎉 大家都還清了！</div>'; return; }
+function deleteTransfer(id){
+  const t=state.transfers.find(t=>t.id===id);
+  if(t)addLog('del',`刪除轉帳紀錄：${t.from} → ${t.to} ${t.amount} 元`);
+  state.transfers=state.transfers.filter(t=>t.id!==id);
+  save();renderHistory();renderDebts();toast('已刪除');
+}
 
-  el.innerHTML = people.map(person => {
-    const p = pc(person);
-    const rows = debts[person];
-    const total = rows.reduce((s,r)=>s+r.amount, 0);
-    const rowsHtml = rows.map(r => `
-      <div class="person-debt-row">
-        <span class="to-whom">還給 <strong>${r.to}</strong></span>
-        <span class="row-amt">${Math.round(r.amount)} 元</span>
-      </div>`).join('');
-    return `
-      <div class="person-debt-card">
-        <div class="person-debt-header" style="background:${p.bg};color:${p.fg}">
-          <div class="pname">
-            <span class="person-emoji">${p.em}</span>
-            <span>${person}</span>
-          </div>
-          <span class="person-debt-total">${Math.round(total)} 元</span>
-        </div>
-        <div class="person-debt-rows">${rowsHtml}</div>
-      </div>`;
+// ── DEBT CALC（含轉帳餘額）──
+function calcDebts(){
+  // raw debts from unpaid items
+  const raw={}; // raw[from][to] = amount owed
+  const ensure=(a,b)=>{if(!raw[a])raw[a]={};if(!raw[a][b])raw[a][b]=0};
+  state.records.forEach(r=>{
+    r.items.forEach(item=>{
+      if(!item.paid&&item.consumer!==r.payer){
+        ensure(item.consumer,r.payer);
+        raw[item.consumer][r.payer]+=item.amount;
+      }
+    });
+  });
+
+  // surplus from transfers (remaining amount not yet settled)
+  const surplus={}; // surplus[from][to] = leftover credit
+  ;(state.transfers||[]).forEach(t=>{
+    if(t.surplus>0){
+      if(!surplus[t.from])surplus[t.from]={};
+      if(!surplus[t.from][t.to])surplus[t.from][t.to]=0;
+      surplus[t.from][t.to]+=t.surplus;
+    }
+  });
+
+  // Build result: person → [{to, owes, credit, net}]
+  const all=new Set([
+    ...Object.keys(raw),
+    ...Object.values(raw).flatMap(v=>Object.keys(v)),
+    ...Object.keys(surplus),
+    ...Object.values(surplus).flatMap(v=>Object.keys(v)),
+  ]);
+  const result={};
+  const done=new Set();
+  all.forEach(a=>all.forEach(b=>{
+    if(a===b)return;
+    const key=[a,b].sort().join('|');
+    if(done.has(key))return;done.add(key);
+    const ab=(raw[a]?.[b]||0), ba=(raw[b]?.[a]||0);
+    const sa=(surplus[a]?.[b]||0), sb=(surplus[b]?.[a]||0);
+    // net: a owes b = ab - ba - sa + sb
+    const net=ab-ba-sa+sb;
+    if(net>0.01){
+      if(!result[a])result[a]=[];
+      result[a].push({to:b,owes:net,credit:sa});
+    } else if(net<-0.01){
+      if(!result[b])result[b]=[];
+      result[b].push({to:a,owes:-net,credit:sb});
+    } else if(sa>0){
+      // net=0 but has surplus: show credit only
+      if(!result[a])result[a]=[];
+      result[a].push({to:b,owes:0,credit:sa});
+    } else if(sb>0){
+      if(!result[b])result[b]=[];
+      result[b].push({to:a,owes:0,credit:sb});
+    }
+  }));
+  return result;
+}
+
+function renderDebts(){
+  const sel=document.getElementById('debtFilter');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">全部</option>'+state.members.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
+  const filter=sel.value;
+  const debts=calcDebts();
+  const people=Object.keys(debts).filter(p=>!filter||p===filter);
+  const el=document.getElementById('debtList');
+  if(!people.length){el.innerHTML='<div class="no-debt">🎉 目前清清白白，沒有恩怨！</div>';return}
+
+  el.innerHTML=people.map(person=>{
+    const p=pc(person);
+    const rows=debts[person];
+    const totalNet=rows.reduce((s,r)=>s+r.owes,0);
+    const rowsHtml=rows.map(r=>{
+      let mainRow='';
+      if(r.owes>0.01){
+        mainRow=`<div class="person-debt-row">
+          <span class="to-whom">還給 <strong>${r.to}</strong></span>
+          <span class="row-amt">${Math.round(r.owes)} 元</span>
+        </div>`;
+      } else if(r.owes<-0.01){
+        mainRow=`<div class="person-debt-row">
+          <span class="to-whom" style="color:var(--green)"><strong>${r.to}</strong> 欠回來</span>
+          <span class="row-amt" style="color:var(--green)">+${Math.round(-r.owes)} 元</span>
+        </div>`;
+      }
+      const balRow=r.credit>0?`
+        <div class="balance-row">
+          <span class="balance-label">💳 預付餘額（待抵）</span>
+          <span class="balance-amt">+${Math.round(r.credit)} 元</span>
+        </div>`:'';
+      return mainRow+balRow;
+    }).join('');
+
+    const totalLabel=totalNet>0.01
+      ? Math.round(totalNet)+' 元'
+      : totalNet<-0.01
+        ? '被欠 '+Math.round(-totalNet)+' 元'
+        : '✓ 已結清';
+
+    return`<div class="person-debt-card">
+      <div class="person-debt-header" style="background:${p.bg};color:${p.fg}">
+        <div class="pname"><span class="person-emoji">${p.em}</span><span>${person}</span></div>
+        <span class="person-debt-total">${totalLabel}</span>
+      </div>
+      <div class="person-debt-rows">${rowsHtml}</div>
+    </div>`;
   }).join('');
 }
 
-// ── History ──
-function isFullyCleared(r) { return r.items.every(i=>i.paid||i.consumer===r.payer); }
-function hasAnyUnpaid(r) { return r.items.some(i=>!i.paid&&i.consumer!==r.payer); }
 
-function renderHistory() {
-  const filter = document.getElementById('historyFilter').value;
-  let records = [...state.records].sort((a,b)=>b.createdAt-a.createdAt);
-  if (filter==='unpaid') records = records.filter(r=>hasAnyUnpaid(r));
-  if (filter==='cleared') records = records.filter(r=>isFullyCleared(r));
+// ── TOGGLE PAID ──
+function toggleItemPaid(recordId,itemIdx){
+  const r=state.records.find(r=>r.id===recordId);
+  if(!r)return;
+  r.items[itemIdx].paid=!r.items[itemIdx].paid;
+  const item=r.items[itemIdx];
+  addLog('edit',`${item.paid?'標記':'取消'}還款：${item.consumer}「${item.item}」${item.amount} 元`);
+  save();renderHistory();renderDebts();
+  toast(item.paid?'✅ 已還款':'已取消還款');
+}
 
-  const el = document.getElementById('historyList');
-  if (!records.length) { el.innerHTML = `<div class="empty-state"><div class="icon">📭</div>這裡還沒有紀錄</div>`; return; }
+// ── HISTORY ──
+function isFullyCleared(r){return r.items.every(i=>i.paid||i.consumer===r.payer)}
+function hasAnyUnpaid(r){return r.items.some(i=>!i.paid&&i.consumer!==r.payer)}
+function recordInvolvePerson(r,person){return r.payer===person||r.items.some(i=>i.consumer===person)}
+function transferInvolvePerson(t,person){return t.from===person||t.to===person}
 
-  el.innerHTML = records.map(r => {
-    const allClear = isFullyCleared(r);
-    const itemsHtml = r.items.map((item, idx) => {
-      const isSelf = item.consumer === r.payer;
-      const paid = item.paid || isSelf;
-      const p = pc(item.consumer);
+let historySub='expense'; // 'expense' or 'transfer'
+function switchHistorySub(sub){
+  historySub=sub;
+  document.getElementById('hSubExpenseBtn').classList.toggle('active',sub==='expense');
+  document.getElementById('hSubTransferBtn').classList.toggle('active',sub==='transfer');
+  document.getElementById('expenseList').style.display=sub==='expense'?'block':'none';
+  document.getElementById('transferList').style.display=sub==='transfer'?'block':'none';
+  // hide filter row for transfer (no unpaid/cleared concept)
+  document.getElementById('historyFilter').style.display=sub==='transfer'?'none':'block';
+}
 
-      let stateClass, rightHtml;
-      if (isSelf) {
-        stateClass = 'is-self';
-        rightHtml = `<span class="item-amount">${item.amount} 元</span><span class="item-self-label">付錢的人</span>`;
-      } else if (paid) {
-        stateClass = 'is-paid';
-        rightHtml = `
-          <span class="item-amount">${item.amount} 元</span>
-          <button class="btn-pay paid-state" onclick="toggleItemPaid('${r.id}',${idx})">
-            <span class="pay-icon">✅</span> 已還款
-          </button>`;
-      } else {
-        stateClass = 'is-unpaid';
-        rightHtml = `
-          <span class="item-amount">${item.amount} 元</span>
-          <button class="btn-pay unpaid-state" onclick="toggleItemPaid('${r.id}',${idx})">
-            <span class="pay-icon">🪙</span> 未還款
-          </button>`;
-      }
+function renderHistory(){
+  const filter=document.getElementById('historyFilter').value;
+  const person=document.getElementById('historyPerson').value;
 
-      return `
-        <div class="item-row ${stateClass}">
-          <div class="item-left">
-            <span class="item-emoji">${p.em}</span>
-            <span class="item-name">${item.consumer}</span>
-            <span class="item-detail">｜${item.item}</span>
-          </div>
+  // Update person dropdown
+  const ps=document.getElementById('historyPerson');
+  const curP=ps.value;
+  ps.innerHTML='<option value="">所有人</option>'+state.members.map(m=>`<option value="${m}" ${m===curP?'selected':''}>${m}</option>`).join('');
+
+  // ── 消費紀錄 ──
+  let records=[...state.records].sort((a,b)=>b.createdAt-a.createdAt);
+  if(filter==='unpaid')records=records.filter(r=>hasAnyUnpaid(r));
+  if(filter==='cleared')records=records.filter(r=>isFullyCleared(r));
+  if(person)records=records.filter(r=>recordInvolvePerson(r,person));
+
+  const expenseEl=document.getElementById('expenseList');
+  if(!records.length){
+    expenseEl.innerHTML=`<div class="empty-state"><div class="icon">📭</div>沒有消費紀錄</div>`;
+  } else {
+    expenseEl.innerHTML=records.map(r=>{
+      const allClear=isFullyCleared(r);
+      const itemsHtml=r.items.map((item,idx)=>{
+        const isSelf=item.consumer===r.payer;
+        const paid=item.paid||isSelf;
+        const p=pc(item.consumer);
+        let cls,rightHtml;
+        if(isSelf){
+          cls='is-self';
+          rightHtml=`<span class="item-amount">${item.amount} 元</span><span class="item-self-label">已付款</span>`;
+        } else if(paid){
+          cls='is-paid';
+          rightHtml=`<span class="item-amount">${item.amount} 元</span>
+            <button class="btn-pay paid-state" onclick="toggleItemPaid('${r.id}',${idx})"><span class="pay-icon">✅</span> 已還款</button>`;
+        } else {
+          cls='is-unpaid';
+          rightHtml=`<span class="item-amount">${item.amount} 元</span>
+            <button class="btn-pay unpaid-state" onclick="toggleItemPaid('${r.id}',${idx})"><span class="pay-icon">🪙</span> 未還款</button>`;
+        }
+        return`<div class="item-row ${cls}">
+          <div class="item-left"><span class="item-emoji">${p.em}</span><span class="item-name">${item.consumer}</span><span class="item-detail">｜${item.item}</span></div>
           <div class="item-right">${rightHtml}</div>
         </div>`;
-    }).join('');
-
-    return `
-      <div class="record-card">
+      }).join('');
+      return`<div class="record-card">
         <div class="record-header">
-          <div>
-            <div class="record-title">${r.title}</div>
-            <div class="record-meta">${r.date} · ${r.payer} 付錢</div>
-          </div>
-          <span class="badge ${allClear?'all-clear':'partial'}">${allClear?'✓ 都還清了':'有未還款'}</span>
+          <div><div class="record-title">${r.title}</div><div class="record-meta">${r.date} · ${r.payer} 付錢</div></div>
+          <span class="badge ${allClear?'all-clear':'partial'}">${allClear?'✓ 完全結清':'尚有欠款'}</span>
         </div>
         ${itemsHtml}
         <div class="record-footer">
@@ -641,119 +771,228 @@ function renderHistory() {
           </div>
         </div>
       </div>`;
-  }).join('');
+    }).join('');
+  }
+
+  // ── 轉帳儲值（grouped by pair, collapsible）──
+  let transfers=[...(state.transfers||[])].sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt-b.createdAt);
+  if(person)transfers=transfers.filter(t=>transferInvolvePerson(t,person));
+
+  const transferEl=document.getElementById('transferList');
+  if(!transfers.length){
+    transferEl.innerHTML=`<div class="empty-state"><div class="icon">📭</div>沒有轉帳儲值紀錄</div>`;
+  } else {
+    // Group by pair key (sorted names so A→B and B→A are separate)
+    const groups={};
+    transfers.forEach(t=>{
+      const key=`${t.from}→${t.to}`;
+      if(!groups[key])groups[key]={from:t.from,to:t.to,items:[]};
+      groups[key].items.push(t);
+    });
+
+    transferEl.innerHTML=Object.entries(groups).map(([key,g])=>{
+      const pFrom=pc(g.from),pTo=pc(g.to);
+      const totalAmt=g.items.reduce((s,t)=>s+t.amount,0);
+      const totalSurplus=g.items.reduce((s,t)=>s+(t.surplus||0),0);
+      const count=g.items.length;
+      const groupId='tg_'+state.members.indexOf(g.from)+'_'+state.members.indexOf(g.to);
+
+      const rowsHtml=g.items.map(t=>`
+        <div class="tgroup-row">
+          <div class="tgroup-row-left">
+            <span class="tgroup-row-meta">${t.date}${t.note?' · '+t.note:''}</span>
+            ${t.surplus>0?`<span class="tgroup-row-surplus">餘額 ${Math.round(t.surplus)} 元</span>`:'<span class="tgroup-row-surplus" style="color:var(--text-muted)">已全數抵消</span>'}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="tgroup-row-amt">${t.amount} 元</span>
+            <button class="btn-action btn-delete" onclick="deleteTransfer('${t.id}')">刪除</button>
+          </div>
+        </div>`).join('');
+
+      return`<div class="tgroup-card">
+        <div class="tgroup-header" onclick="toggleGroup('${groupId}')">
+          <div>
+            <div class="tgroup-parties">
+              <span style="color:${pFrom.fg}">${pFrom.em} ${g.from}</span>
+              <span style="color:var(--text-muted);font-size:.8rem;font-weight:400">→</span>
+              <span style="color:${pTo.fg}">${pTo.em} ${g.to}</span>
+            </div>
+            <div style="font-size:.74rem;color:var(--text-muted);margin-top:3px">${count} 筆儲值</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="tgroup-summary">
+              <span class="tgroup-total">${totalAmt} 元</span>
+              ${totalSurplus>0?`<span class="tgroup-surplus">餘額 ${Math.round(totalSurplus)} 元</span>`:''}
+            </div>
+            <span class="tgroup-chevron" id="${groupId}_chevron">▼</span>
+          </div>
+        </div>
+        <div class="tgroup-body" id="${groupId}_body">${rowsHtml}</div>
+      </div>`;
+    }).join('');
+  }
 }
 
-// ── Edit modal (handles both record fields AND paid status) ──
-let editingPaidId = null;
+// ── TOGGLE GROUP ──
+function toggleGroup(groupId){
+  const body=document.getElementById(groupId+'_body');
+  const chevron=document.getElementById(groupId+'_chevron');
+  if(!body)return;
+  const isOpen=body.classList.toggle('open');
+  chevron.classList.toggle('open',isOpen);
+}
 
-function openEditModal(id) {
-  const r = state.records.find(r=>r.id===id);
-  if (!r) return;
-  editingPaidId = id;
-
-  document.getElementById('editPaidTitle').textContent = `編輯：${r.title}`;
-
-  // Build content: basic info edit + paid toggles
-  const nonSelfItems = r.items.filter(i => i.consumer !== r.payer);
-  const paidToggles = nonSelfItems.length ? `
-    <div class="edit-paid-section">
-      <div class="edit-paid-title">還款狀態</div>
-      ${nonSelfItems.map((item, origIdx) => {
-        const realIdx = r.items.indexOf(item);
-        const p = pc(item.consumer);
-        return `
-          <div class="edit-paid-row">
-            <div class="epr-left">
-              <span>${p.em}</span>
-              <span><strong>${item.consumer}</strong> · ${item.item} · ${item.amount} 元</span>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="epToggle_${realIdx}" ${item.paid?'checked':''}>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>`;
-      }).join('')}
-    </div>` : '';
-
-  document.getElementById('editPaidContent').innerHTML = `
+// ── EDIT MODAL（可修改明細內容）──
+let editingId=null;
+function openEditModal(id){
+  const r=state.records.find(r=>r.id===id);
+  if(!r)return;
+  editingId=id;
+  document.getElementById('editModalTitle').textContent=`編輯：${r.title}`;
+  const memberOpts=state.members.map(m=>`<option value="${m}">${m}</option>`).join('');
+  const itemsHtml=r.items.map((item,idx)=>`
+    <div class="edit-item-row">
+      <select id="ei_consumer_${idx}">
+        <option value="">誰吃的</option>
+        ${state.members.map(m=>`<option value="${m}" ${m===item.consumer?'selected':''}>${m}</option>`).join('')}
+      </select>
+      <input type="text" id="ei_item_${idx}" value="${item.item}" placeholder="品項">
+      <input type="number" id="ei_amount_${idx}" value="${item.amount}" min="0">
+      <button class="btn-remove" onclick="removeEditItem(${idx})">×</button>
+    </div>`).join('');
+  document.getElementById('editModalContent').innerHTML=`
     <div style="display:grid;gap:10px;margin-bottom:4px">
+      <div class="form-group" style="margin:0"><label>日期</label><input type="date" id="ep_date" class="full" value="${r.date}"></div>
+      <div class="form-group" style="margin:0"><label>店家名稱</label><input type="text" id="ep_title" class="full" value="${r.title}"></div>
       <div class="form-group" style="margin:0">
-        <label>日期</label>
-        <input type="date" id="ep_date" class="full" value="${r.date}">
-      </div>
-      <div class="form-group" style="margin:0">
-        <label>店家名稱</label>
-        <input type="text" id="ep_title" class="full" value="${r.title}">
+        <label>誰付錢</label>
+        <select id="ep_payer" class="full"><option value="">請選擇</option>${state.members.map(m=>`<option value="${m}" ${m===r.payer?'selected':''}>${m}</option>`).join('')}</select>
       </div>
     </div>
-    ${paidToggles}`;
-
-  document.getElementById('editPaidModal').classList.add('open');
+    <div class="edit-paid-section">
+      <div class="edit-paid-title">消費明細</div>
+      <div id="editItemRows">${itemsHtml}</div>
+      <button class="btn-add-item" style="margin-top:8px" onclick="addEditItem()">＋ 新增一筆</button>
+    </div>
+    <div class="edit-paid-section">
+      <div class="edit-paid-title">還款狀態</div>
+      ${r.items.filter(i=>i.consumer!==r.payer).map((item,origIdx)=>{
+        const realIdx=r.items.indexOf(item);
+        const p=pc(item.consumer);
+        return`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:.85rem">${p.em} <strong>${item.consumer}</strong> · ${item.item}</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="epToggle_${realIdx}" ${item.paid?'checked':''}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>`;
+      }).join('')}
+    </div>`;
+  document.getElementById('editModal').classList.add('open');
 }
 
-function saveEditPaid() {
-  const r = state.records.find(r=>r.id===editingPaidId);
-  if (!r) return;
-  // Save basic fields
-  const newDate = document.getElementById('ep_date').value;
-  const newTitle = document.getElementById('ep_title').value.trim();
-  if (newDate) r.date = newDate;
-  if (newTitle) r.title = newTitle;
-  // Save paid toggles
-  r.items.forEach((item, idx) => {
-    if (item.consumer === r.payer) return;
-    const cb = document.getElementById(`epToggle_${idx}`);
-    if (cb) item.paid = cb.checked;
+function removeEditItem(idx){
+  const row=document.getElementById(`ei_consumer_${idx}`)?.closest('.edit-item-row');
+  if(row)row.remove();
+}
+
+function addEditItem(){
+  const container=document.getElementById('editItemRows');
+  const idx=Date.now();
+  const div=document.createElement('div');
+  div.className='edit-item-row';
+  div.innerHTML=`
+    <select id="ei_consumer_${idx}">
+      <option value="">誰吃的</option>
+      ${state.members.map(m=>`<option value="${m}">${m}</option>`).join('')}
+    </select>
+    <input type="text" id="ei_item_${idx}" placeholder="品項">
+    <input type="number" id="ei_amount_${idx}" min="0" placeholder="金額">
+    <button class="btn-remove" onclick="this.closest('.edit-item-row').remove()">×</button>`;
+  container.appendChild(div);
+}
+
+function saveEdit(){
+  const r=state.records.find(r=>r.id===editingId);
+  if(!r)return;
+  const newDate=document.getElementById('ep_date').value;
+  const newTitle=document.getElementById('ep_title').value.trim();
+  const newPayer=document.getElementById('ep_payer').value;
+  if(newDate)r.date=newDate;
+  if(newTitle)r.title=newTitle;
+  if(newPayer)r.payer=newPayer;
+
+  // Collect edited items from rows
+  const rows=document.querySelectorAll('#editItemRows .edit-item-row');
+  const newItems=[];
+  rows.forEach(row=>{
+    const sel=row.querySelector('select');
+    const inputs=row.querySelectorAll('input');
+    const consumer=sel?.value;
+    const item=inputs[0]?.value.trim();
+    const amount=parseFloat(inputs[1]?.value)||0;
+    if(consumer&&item&&amount>0){
+      // preserve paid status if same consumer+item exists
+      const existing=r.items.find(i=>i.consumer===consumer&&i.item===item);
+      newItems.push({consumer,item,amount,paid:existing?existing.paid:false});
+    }
   });
-  save(); renderHistory(); renderDebts();
-  closeModal('editPaidModal');
+  if(newItems.length>0){
+    r.items=newItems;
+    r.total=newItems.reduce((s,i)=>s+i.amount,0);
+  }
+
+  // Update paid toggles
+  r.items.forEach((item,idx)=>{
+    if(item.consumer===r.payer)return;
+    const cb=document.getElementById(`epToggle_${idx}`);
+    if(cb)item.paid=cb.checked;
+  });
+
+  addLog('edit',`編輯紀錄「${r.title}」`);
+  save();renderHistory();renderDebts();
+  closeModal('editModal');
   toast('已更新 ✅');
 }
 
-function deleteRecord(id) {
-  if (!confirm('確定刪除這筆紀錄？')) return;
-  state.records = state.records.filter(r=>r.id!==id);
-  save(); renderHistory(); renderDebts(); toast('已刪除');
+function deleteRecord(id){
+  const r=state.records.find(r=>r.id===id);
+  if(r)addLog('del',`刪除消費「${r.title}」${r.total} 元`);
+  state.records=state.records.filter(r=>r.id!==id);
+  save();renderHistory();renderDebts();toast('已刪除');
 }
 
-// ── Init ──
-function startApp(data) {
-  if (data) {
-    state.members = data.members || [];
-    state.records = data.records || [];
+// ── INIT ──
+function startApp(data){
+  if(data){
+    state.members=data.members||[];
+    state.records=data.records||[];
+    state.transfers=data.transfers||[];
+    state.logs=data.logs||[];
   }
-  if (!state.members.length) {
-    state.members = ['愛咪','子芸','俐安','芳芳'];
-    save();
-  }
-  document.getElementById('addDate').value = new Date().toISOString().slice(0,10);
-  renderAddForm();
-  renderDebts();
+  if(!state.members.length){state.members=['愛咪','子芸','俐安','芳芳'];save()}
+  document.getElementById('addDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('tfDate').value=new Date().toISOString().slice(0,10);
+  renderAddForm();renderDebts();
 
-  // Start realtime listener
-  _unsubscribe = window._fbListen((data) => {
-    if (_ignoreNext) { _ignoreNext = false; return; }
-    state.members = data.members || [];
-    state.records = data.records || [];
-    renderDebts();
-    renderHistory();
-    renderAddForm();
+  window._fbListen(data=>{
+    if(_ignoreNext){_ignoreNext=false;return}
+    state.members=data.members||[];
+    state.records=data.records||[];
+    state.transfers=data.transfers||[];
+    state.logs=data.logs||[];
+    renderDebts();renderHistory();renderAddForm();
     toast('🔄 資料已同步更新');
   });
 }
-
-function showLoading(show) {
-  document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
-}
-
-if (window._firebaseReady) {
+function showLoading(show){document.getElementById('loadingOverlay').style.display=show?'flex':'none'}
+if(window._firebaseReady){
   showLoading(true);
-  window._fbLoad().then(data => { showLoading(false); startApp(data); });
+  window._fbLoad().then(data=>{showLoading(false);startApp(data)});
 } else {
-  document.addEventListener('firebase-ready', () => {
+  document.addEventListener('firebase-ready',()=>{
     showLoading(true);
-    window._fbLoad().then(data => { showLoading(false); startApp(data); });
+    window._fbLoad().then(data=>{showLoading(false);startApp(data)});
   });
 }
 </script>
